@@ -12,11 +12,13 @@ If you've ever tried using Emacs with `emacs -nw` (no window) in your terminal,
 you might've faced a frustrating experience: because Emacs binds keys starting
 with <kbd>Ctrl</kbd> and terminal input is first handled by the terminal
 emulator; some keys might not work as expected. They might provoke an action in
-the terminal but not in Emacs or be changed on the way.
+the terminal but not in Emacs or be changed on the way. If you're also not using
+a "typical" QWERTY layout or have the bad idea of having accents (thus non ASCII
+characters) in your language, the problem gets worse.
 
 A common issue is trying to use <kbd>Ctrl+Backspace</kbd> which should delete a
 word but instead inserts <kbd>Ctrl+h</kbd> instead when used in the terminal.
-There are also issues for more complex key combinations.
+There are also issues for more complex key/characters combinations.
 
 ## Fix
 
