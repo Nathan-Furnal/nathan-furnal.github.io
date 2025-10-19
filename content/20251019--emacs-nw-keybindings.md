@@ -265,5 +265,13 @@ Exec=emacs --daemon=gui-temp -Q && emacsclient -s gui-temp --create-frame %F
 exec emacsclient -s tui -t -a="" "$@"
 ```
 
+Finally, you can reload the systemd daemon and start then enable the services:
+
+```sh
+systemctl --user daemon-reload
+systemctl --user enable emacsd-gui.service emacsd-tui.service
+systemctl --user start emacsd-gui.service emacsd-tui.service
+```
+
 That's all for me, I honestly didn't think that trying to fix
 <kbd>Ctrl+Backspace</kbd> would become such an adventure.
