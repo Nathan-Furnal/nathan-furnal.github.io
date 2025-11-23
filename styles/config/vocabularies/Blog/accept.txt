@@ -2,6 +2,7 @@ Ctrl
 DB
 FastAPI
 Github
+GitHub
 Gitlab
 JavaScript
 SQLAlchemy
