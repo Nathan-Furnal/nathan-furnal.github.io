@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+      <!-- Title handling -->
+    <title>Emacs in the terminal: keybindings, client and more | Gribouillis</title>
+    <!-- Meta description -->
+    <meta name="description" content="Mindless sketches ✐ᝰ">
+    <link rel="stylesheet" href="https://blog.natfu.be/css/main.css">
+  <link rel="stylesheet" type="text/css" href="https://blog.natfu.be/css/syntax-theme-dark.css" media="(prefers-color-scheme: dark)" />
+  <link rel="stylesheet" type="text/css" href="https://blog.natfu.be/css/syntax-theme-light.css" media="(prefers-color-scheme: light)" />
+      <!-- RSS Feed -->
+      
+    <link rel="alternate" type="application/rss+xml" title="RSS" href="https://blog.natfu.be/rss.xml">
+      
+  </head>
+  <body>
+    <header>
+      <div class="nav-container">
+        <div class="nav-heading">
+          <div class="font-3rem">Gribouillis</div>
+          <p>Mindless sketches ✐ᝰ</p>
+        </div>
+        <div class="nav-content">
+          <nav>
+            <a href="https://blog.natfu.be">Posts</a>
+            <a href="https://blog.natfu.be/about">About</a>
+          </nav>
+        </div>
+      </div>
+    </header>
+    <main role="main">
+      
+<h1 class="title">
+  Emacs in the terminal: keybindings, client and more
+</h1>
+    <div class="post-meta">
+      <time class="published" datetime="2025-10-19">
+        Published: October 19, 2025
+      </time>
+
+      
+    </div>
+<hr class="separator">
+<h1 id="emacs-in-the-terminal">Emacs in the terminal</h1>
+<p>If you've ever tried using Emacs with <code>emacs -nw</code> (no window) in your terminal,
+you might've faced a frustrating experience: because Emacs binds keys starting
+with <kbd>Ctrl</kbd> and terminal input is first handled by the terminal
+emulator; some keys might not work as expected. They might provoke an action in
+the terminal but not in Emacs or be changed on the way. If you're also not using
+a "typical" QWERTY layout or have the bad idea of having accents (thus non ASCII
+characters) in your language, the problem gets worse.</p>
+<p>A common issue is trying to use <kbd>Ctrl+Backspace</kbd> which should delete a
+word but instead inserts <kbd>Ctrl+h</kbd> instead when used in the terminal.
+There are also issues for more complex key/characters combinations.</p>
+<h2 id="fix">Fix</h2>
+<p>The fix consists of using the <a rel="noopener" target="_blank" href="https://sw.kovidgoyal.net/kitty/keyboard-protocol/">Kitty Keyboard
+Protocol</a> in both Emacs and
+your terminal emulators.</p>
+<p>I've tried to set a couple variables and tried some terminal emulators; the best
+experience I've had is with the <a rel="noopener" target="_blank" href="https://github.com/benotn/kkp"><code>kkp</code> package</a>
+and the <a rel="noopener" target="_blank" href="https://ghostty.org/">ghostty terminal emulator</a>.</p>
+<p>With the following configuration, in your initialization file:</p>
+<pre data-lang="el" class="language-el z-code"><code class="language-el" data-lang="el"><span class="z-source z-lisp"><span class="z-meta z-group z-lisp"><span class="z-punctuation z-definition z-group z-begin z-lisp">(</span><span class="z-support z-function z-lisp">use-package</span> kkp
+</span></span><span class="z-source z-lisp"><span class="z-meta z-group z-lisp">  :ensure <span class="z-constant z-language z-lisp">t</span>
+</span></span><span class="z-source z-lisp"><span class="z-meta z-group z-lisp">  :config
+</span></span><span class="z-source z-lisp"><span class="z-meta z-group z-lisp">  <span class="z-comment z-line z-semicolon z-lisp"><span class="z-punctuation z-definition z-comment z-lisp">;</span>; (setq kkp-alt-modifier &#39;alt) ;; use this if you want to map the Alt keyboard modifier to Alt in Emacs (and not to Meta)
+</span></span></span><span class="z-source z-lisp"><span class="z-meta z-group z-lisp">  <span class="z-meta z-group z-lisp"><span class="z-punctuation z-definition z-group z-begin z-lisp">(</span>global<span class="z-keyword z-operator z-arithmetic z-lisp">-</span>kkp<span class="z-keyword z-operator z-arithmetic z-lisp">-</span>mode <span class="z-keyword z-operator z-arithmetic z-lisp">+</span><span class="z-constant z-numeric z-lisp">1</span><span class="z-punctuation z-definition z-group z-end z-lisp">)</span></span><span class="z-punctuation z-definition z-group z-end z-lisp">)</span></span>
+</span></code></pre>
+<h2 id="quality-of-life">Quality of life</h2>
+<p>When setting Emacs as your <code>$EDITOR</code> in the shell, I discovered that <code>export EDITOR="emacs -nw"</code> sometimes fail depending on your shell, because it expects
+an executable without any white-spaces. An alternative is to write a shell
+function and refer to that as the editor:</p>
+<pre data-lang="sh" class="language-sh z-code"><code class="language-sh" data-lang="sh"><span class="z-source z-shell z-bash"><span class="z-comment z-line z-number-sign z-shell"><span class="z-punctuation z-definition z-comment z-begin z-shell">#</span></span><span class="z-comment z-line z-number-sign z-shell">!/bin/sh</span><span class="z-comment z-line z-number-sign z-shell">
+</span></span><span class="z-source z-shell z-bash"><span class="z-meta z-function-call z-shell"><span class="z-support z-function z-exec z-shell">exec</span></span><span class="z-meta z-function-call z-arguments z-shell"> emacs -nw <span class="z-string z-quoted z-double z-shell"><span class="z-punctuation z-definition z-string z-begin z-shell">&quot;</span><span class="z-meta z-group z-expansion z-parameter z-shell"><span class="z-punctuation z-definition z-variable z-shell">$</span><span class="z-variable z-language z-shell">@</span></span><span class="z-punctuation z-definition z-string z-end z-shell">&quot;</span></span></span>
+</span></code></pre>
+<p>I have it in <code>/home/natfu/.local/bin/emacseditor</code> and I've set my <code>$EDITOR</code> to this path.</p>
+<p>Note that this spins a new instance of Emacs every time with a slight delay in
+starting up even with a rather optimized <code>~/.emacs.d/init.el</code>. The alternative
+is to use the
+<a rel="noopener" target="_blank" href="https://www.gnu.org/software/emacs/manual/html_node/emacs/Invoking-emacsclient.html"><code>emacsclient</code></a>.
+In my case, I'm using Linux with <code>systemd</code> so I can write a unit file that will
+start an Emacs daemon in the background and open a new frame instantly by
+calling it. On my system, I've found that file in those places:</p>
+<ul>
+<li><code>/usr/share/emacs/30.2/etc/emacs.service</code></li>
+<li><code>/usr/lib/systemd/user/emacs.service</code></li>
+</ul>
+<p>To make it clear that I'll use it for my user, I'll copy the file under
+<code>~/.config/systemd/user/emacsd.service</code>. You can tweak it to your liking, for
+example by adding an environment file only for that service (useful to set the
+path among other things).</p>
+<pre data-lang="conf" class="language-conf z-code"><code class="language-conf" data-lang="conf"><span class="z-source z-genconfig"><span class="z-storage z-type z-genconfig">[Unit]
+</span></span><span class="z-source z-genconfig"><span class="z-meta z-param z-genconfig"><span class="z-variable z-parameter z-genconfig">Description</span><span class="z-keyword z-operator z-genconfig">=</span></span>Emacs text editor (<span class="z-support z-constant z-genconfig">GUI</span>)
+</span><span class="z-source z-genconfig"><span class="z-meta z-param z-genconfig"><span class="z-variable z-parameter z-genconfig">Documentation</span><span class="z-keyword z-operator z-genconfig">=</span></span>info<span class="z-keyword z-operator z-genconfig">:</span>emacs man<span class="z-keyword z-operator z-genconfig">:</span><span class="z-meta z-function z-genconfig"><span class="z-entity z-name z-function z-genconfig">emacs</span>(</span><span class="z-constant z-numeric z-genconfig">1</span>) <span class="z-meta z-url z-genconfig"><span class="z-constant z-other z-genconfig">https://gnu.org/software/emacs</span></span><span class="z-keyword z-operator z-genconfig">/</span>
+</span><span class="z-source z-genconfig">
+</span><span class="z-source z-genconfig"><span class="z-storage z-type z-genconfig">[Service]
+</span></span><span class="z-source z-genconfig"><span class="z-meta z-param z-genconfig"><span class="z-variable z-parameter z-genconfig">Type</span><span class="z-keyword z-operator z-genconfig">=</span></span>notify
+</span><span class="z-source z-genconfig"><span class="z-meta z-param z-genconfig"><span class="z-variable z-parameter z-genconfig">ExecStart</span><span class="z-keyword z-operator z-genconfig">=</span></span><span class="z-keyword z-operator z-genconfig">/</span>usr<span class="z-keyword z-operator z-genconfig">/</span>bin<span class="z-keyword z-operator z-genconfig">/</span>emacs <span class="z-keyword z-operator z-genconfig">-</span><span class="z-keyword z-operator z-genconfig">-</span>fg<span class="z-keyword z-operator z-genconfig">-</span>daemon
+</span><span class="z-source z-genconfig"><span class="z-meta z-param z-genconfig"><span class="z-variable z-parameter z-genconfig">ExecStop</span><span class="z-keyword z-operator z-genconfig">=</span></span><span class="z-keyword z-operator z-genconfig">/</span>usr<span class="z-keyword z-operator z-genconfig">/</span>bin<span class="z-keyword z-operator z-genconfig">/</span>emacsclient <span class="z-keyword z-operator z-genconfig">-</span><span class="z-keyword z-operator z-genconfig">-</span>eval <span class="z-string z-quoted z-double z-genconfig">&quot;(kill-emacs)&quot;</span>
+</span><span class="z-source z-genconfig">
+</span><span class="z-source z-genconfig"><span class="z-meta z-comment z-genconfig"><span class="z-comment z-line z-number-sign z-genconfig"># Emacs will exit with status 15 after having received SIGTERM, which
+</span></span></span><span class="z-source z-genconfig"><span class="z-meta z-comment z-genconfig"><span class="z-comment z-line z-number-sign z-genconfig"># is the default &quot;KillSignal&quot; value systemd uses to stop services.
+</span></span></span><span class="z-source z-genconfig"><span class="z-meta z-param z-genconfig"><span class="z-variable z-parameter z-genconfig">SuccessExitStatus</span><span class="z-keyword z-operator z-genconfig">=</span></span><span class="z-constant z-numeric z-genconfig">15</span>
+</span><span class="z-source z-genconfig">
+</span><span class="z-source z-genconfig"><span class="z-meta z-comment z-genconfig"><span class="z-comment z-line z-number-sign z-genconfig"># The location of the SSH auth socket varies by distribution, and some
+</span></span></span><span class="z-source z-genconfig"><span class="z-meta z-comment z-genconfig"><span class="z-comment z-line z-number-sign z-genconfig"># set it from PAM, so don&#39;t override by default.
+</span></span></span><span class="z-source z-genconfig"><span class="z-meta z-comment z-genconfig"><span class="z-comment z-line z-number-sign z-genconfig"># Environment=SSH_AUTH_SOCK=%t/keyring/ssh
+</span></span></span><span class="z-source z-genconfig"><span class="z-meta z-param z-genconfig"><span class="z-variable z-parameter z-genconfig">Restart</span><span class="z-keyword z-operator z-genconfig">=</span></span>on<span class="z-keyword z-operator z-genconfig">-</span>failure
+</span><span class="z-source z-genconfig">
+</span><span class="z-source z-genconfig"><span class="z-storage z-type z-genconfig">[Install]
+</span></span><span class="z-source z-genconfig"><span class="z-meta z-param z-genconfig"><span class="z-variable z-parameter z-genconfig">WantedBy</span><span class="z-keyword z-operator z-genconfig">=</span></span>default<span class="z-keyword z-operator z-genconfig">.</span>target
+</span></code></pre>
+<p>Then, I can change the <code>/home/natfu/.local/bin/emacseditor</code> file to use the client
+instead.</p>
+<pre data-lang="sh" class="language-sh z-code"><code class="language-sh" data-lang="sh"><span class="z-source z-shell z-bash"><span class="z-comment z-line z-number-sign z-shell"><span class="z-punctuation z-definition z-comment z-begin z-shell">#</span></span><span class="z-comment z-line z-number-sign z-shell">!/bin/sh</span><span class="z-comment z-line z-number-sign z-shell">
+</span></span><span class="z-source z-shell z-bash"><span class="z-meta z-function-call z-shell"><span class="z-support z-function z-exec z-shell">exec</span></span><span class="z-meta z-function-call z-arguments z-shell"> emacsclient -t -a=<span class="z-string z-quoted z-double z-shell"><span class="z-punctuation z-definition z-string z-begin z-shell">&quot;</span><span class="z-punctuation z-definition z-string z-end z-shell">&quot;</span></span> <span class="z-string z-quoted z-double z-shell"><span class="z-punctuation z-definition z-string z-begin z-shell">&quot;</span><span class="z-meta z-group z-expansion z-parameter z-shell"><span class="z-punctuation z-definition z-variable z-shell">$</span><span class="z-variable z-language z-shell">@</span></span><span class="z-punctuation z-definition z-string z-end z-shell">&quot;</span></span></span>
+</span></code></pre>
+<p>Finally, start the service with <code>systemctl --user start --now emacsd.service</code> and
+<code>systemctl --user enable --now emacsd.service</code> to have the service launch Emacs for you
+at the start of a user session.</p>
+<p>As always, the <a rel="noopener" target="_blank" href="https://wiki.archlinux.org/title/Emacs">Arch wiki on Emacs</a> is great
+information, even if you're not using Arch.</p>
+<h3 id="important-note-for-linux">Important note for Linux</h3>
+<p>On most Linux systems, you'll be able to use <a rel="noopener" target="_blank" href="https://wiki.archlinux.org/title/Desktop_entries"><code>.desktop</code>
+files</a> which not only do let
+you add icons and interact on a GUI level with an application (like icons in
+menus/desktops), it also lets you interact with the rest of the system, for
+example through shortcuts.</p>
+<p>From my understanding, it's up to the distribution and package management to
+create those files, here's what Arch is doing for Emacs. Where the entry called
+'Emacs (Client)' when clicked on, will try to create a frame by connecting to
+the client if it exists and create it otherwise. It lives in
+<code>/usr/local/share/applications/emacsclient.desktop</code>. If you want to create one
+that'll be picked up by system instead of that one, you should use
+<code>~/.local/share/applications/emacsclient.destkop</code>.</p>
+<pre data-lang="conf" class="language-conf z-code"><code class="language-conf" data-lang="conf"><span class="z-source z-genconfig"><span class="z-storage z-type z-genconfig">[Desktop Entry]
+</span></span><span class="z-source z-genconfig"><span class="z-meta z-param z-genconfig"><span class="z-variable z-parameter z-genconfig">Name</span><span class="z-keyword z-operator z-genconfig">=</span></span>Emacs (Client)
+</span><span class="z-source z-genconfig"><span class="z-meta z-param z-genconfig"><span class="z-variable z-parameter z-genconfig">GenericName</span><span class="z-keyword z-operator z-genconfig">=</span></span>Text Editor
+</span><span class="z-source z-genconfig"><span class="z-meta z-param z-genconfig"><span class="z-variable z-parameter z-genconfig">Comment</span><span class="z-keyword z-operator z-genconfig">=</span></span>Edit text
+</span><span class="z-source z-genconfig"><span class="z-meta z-param z-genconfig"><span class="z-variable z-parameter z-genconfig">MimeType</span><span class="z-keyword z-operator z-genconfig">=</span></span><span class="z-support z-type z-genconfig">text/english</span>;<span class="z-support z-type z-genconfig">text/plain</span>;<span class="z-support z-type z-genconfig">text/x-makefile</span>;<span class="z-support z-type z-genconfig">text/x-c++hdr</span>;<span class="z-support z-type z-genconfig">text/x-c++src</span>;<span class="z-support z-type z-genconfig">text/x-chdr</span>;<span class="z-support z-type z-genconfig">text/x-csrc</span>;<span class="z-support z-type z-genconfig">text/x-java</span>;<span class="z-support z-type z-genconfig">text/x-moc</span>;<span class="z-support z-type z-genconfig">text/x-pascal</span>;<span class="z-support z-type z-genconfig">text/x-tcl</span>;<span class="z-support z-type z-genconfig">text/x-tex</span>;<span class="z-support z-type z-genconfig">application/x-shellscript</span>;<span class="z-support z-type z-genconfig">text/x-c</span>;<span class="z-support z-type z-genconfig">text/x-c</span><span class="z-keyword z-operator z-genconfig">+</span><span class="z-keyword z-operator z-genconfig">+</span>;<span class="z-support z-type z-genconfig">x-scheme-handler/org-protocol</span>;
+</span><span class="z-source z-genconfig"><span class="z-meta z-param z-genconfig"><span class="z-variable z-parameter z-genconfig">Exec</span><span class="z-keyword z-operator z-genconfig">=</span></span>sh <span class="z-keyword z-operator z-genconfig">-</span>c <span class="z-string z-quoted z-double z-genconfig">&quot;if [ -n \<span class="z-constant z-character z-genconfig">\&quot;</span>\\$*\<span class="z-constant z-character z-genconfig">\&quot;</span> ]; then exec /usr/local/bin/emacsclient --alternate-editor= --reuse-frame \<span class="z-constant z-character z-genconfig">\&quot;</span>\\$@\<span class="z-constant z-character z-genconfig">\&quot;</span>; else exec emacsclient --alternate-editor= --create-frame; fi&quot;</span> sh <span class="z-storage z-source z-genconfig">%F</span>
+</span><span class="z-source z-genconfig"><span class="z-meta z-param z-genconfig"><span class="z-variable z-parameter z-genconfig">Icon</span><span class="z-keyword z-operator z-genconfig">=</span></span>emacs
+</span><span class="z-source z-genconfig"><span class="z-meta z-param z-genconfig"><span class="z-variable z-parameter z-genconfig">Type</span><span class="z-keyword z-operator z-genconfig">=</span></span>Application
+</span><span class="z-source z-genconfig"><span class="z-meta z-param z-genconfig"><span class="z-variable z-parameter z-genconfig">Terminal</span><span class="z-keyword z-operator z-genconfig">=</span></span><span class="z-constant z-language z-genconfig">false</span>
+</span><span class="z-source z-genconfig"><span class="z-meta z-param z-genconfig"><span class="z-variable z-parameter z-genconfig">Categories</span><span class="z-keyword z-operator z-genconfig">=</span></span>Development;TextEditor;
+</span><span class="z-source z-genconfig"><span class="z-meta z-param z-genconfig"><span class="z-variable z-parameter z-genconfig">StartupNotify</span><span class="z-keyword z-operator z-genconfig">=</span></span><span class="z-constant z-language z-genconfig">true</span>
+</span><span class="z-source z-genconfig"><span class="z-meta z-param z-genconfig"><span class="z-variable z-parameter z-genconfig">StartupWMClass</span><span class="z-keyword z-operator z-genconfig">=</span></span>Emacs
+</span><span class="z-source z-genconfig"><span class="z-meta z-param z-genconfig"><span class="z-variable z-parameter z-genconfig">Keywords</span><span class="z-keyword z-operator z-genconfig">=</span></span>emacsclient;
+</span><span class="z-source z-genconfig"><span class="z-meta z-param z-genconfig"><span class="z-variable z-parameter z-genconfig">Actions</span><span class="z-keyword z-operator z-genconfig">=</span></span>new<span class="z-keyword z-operator z-genconfig">-</span>window;new<span class="z-keyword z-operator z-genconfig">-</span>instance;
+</span><span class="z-source z-genconfig">
+</span><span class="z-source z-genconfig"><span class="z-storage z-type z-genconfig">[Desktop Action new-window]
+</span></span><span class="z-source z-genconfig"><span class="z-meta z-param z-genconfig"><span class="z-variable z-parameter z-genconfig">Name</span><span class="z-keyword z-operator z-genconfig">=</span></span>New Window
+</span><span class="z-source z-genconfig"><span class="z-meta z-param z-genconfig"><span class="z-variable z-parameter z-genconfig">Exec</span><span class="z-keyword z-operator z-genconfig">=</span></span><span class="z-keyword z-operator z-genconfig">/</span>usr<span class="z-keyword z-operator z-genconfig">/</span>local<span class="z-keyword z-operator z-genconfig">/</span>bin<span class="z-keyword z-operator z-genconfig">/</span>emacsclient <span class="z-keyword z-operator z-genconfig">-</span><span class="z-keyword z-operator z-genconfig">-</span>alternate<span class="z-keyword z-operator z-genconfig">-</span>editor<span class="z-keyword z-operator z-genconfig">=</span> <span class="z-keyword z-operator z-genconfig">-</span><span class="z-keyword z-operator z-genconfig">-</span>create<span class="z-keyword z-operator z-genconfig">-</span>frame <span class="z-storage z-source z-genconfig">%F</span>
+</span><span class="z-source z-genconfig">
+</span><span class="z-source z-genconfig"><span class="z-storage z-type z-genconfig">[Desktop Action new-instance]
+</span></span><span class="z-source z-genconfig"><span class="z-meta z-param z-genconfig"><span class="z-variable z-parameter z-genconfig">Name</span><span class="z-keyword z-operator z-genconfig">=</span></span>New Instance
+</span><span class="z-source z-genconfig"><span class="z-meta z-param z-genconfig"><span class="z-variable z-parameter z-genconfig">Exec</span><span class="z-keyword z-operator z-genconfig">=</span></span>emacs <span class="z-storage z-source z-genconfig">%F</span>
+</span></code></pre>
+<p>Right now, I'm keeping the systemd services and just let that file pick up the
+existing client.</p>
+<p>I've also bound calling the client to <kbd>Super+E</kbd> to get a new frame
+quickly wherever I am on the system and aliased <code>e=$EDITOR</code> to open the editor
+in the terminal.</p>
+<h2 id="using-multiple-emacs-clients">Using multiple Emacs clients</h2>
+<p>I've had a couple annoyances since the Emacs configuration is loaded once when
+the client is created and changes, like themes, are reflected on the client and
+all frames connecting to it.</p>
+<p>I generally change my theme based on the time of day in the GUI but I want it to
+stay a dark theme in the CLI in general. I also want to load some packages only
+in graphical mode, like <code>org-mode</code>. For example,</p>
+<pre data-lang="el" class="language-el z-code"><code class="language-el" data-lang="el"><span class="z-source z-lisp"><span class="z-meta z-group z-lisp"><span class="z-punctuation z-definition z-group z-begin z-lisp">(</span><span class="z-support z-function z-lisp">use-package</span> org
+</span></span><span class="z-source z-lisp"><span class="z-meta z-group z-lisp">  :pin gnu
+</span></span><span class="z-source z-lisp"><span class="z-meta z-group z-lisp">  :ensure <span class="z-constant z-language z-lisp">nil</span>
+</span></span><span class="z-source z-lisp"><span class="z-meta z-group z-lisp">  :defer <span class="z-constant z-language z-lisp">t</span>
+</span></span><span class="z-source z-lisp"><span class="z-meta z-group z-lisp">  :diminish <span class="z-string z-quoted z-double z-lisp"><span class="z-punctuation z-definition z-string z-begin z-lisp">&quot;</span>Οrg<span class="z-punctuation z-definition z-string z-end z-lisp">&quot;</span></span>
+</span></span><span class="z-source z-lisp"><span class="z-meta z-group z-lisp">  :<span class="z-keyword z-control z-lisp">if</span> <span class="z-meta z-group z-lisp"><span class="z-punctuation z-definition z-group z-begin z-lisp">(</span>display<span class="z-keyword z-operator z-arithmetic z-lisp">-</span>graphic<span class="z-keyword z-operator z-arithmetic z-lisp">-</span>p<span class="z-punctuation z-definition z-group z-end z-lisp">)</span></span>
+</span></span><span class="z-source z-lisp"><span class="z-meta z-group z-lisp">  :custom
+</span></span><span class="z-source z-lisp"><span class="z-meta z-group z-lisp">  <span class="z-comment z-line z-semicolon z-lisp"><span class="z-punctuation z-definition z-comment z-lisp">;</span>; ... custom
+</span></span></span><span class="z-source z-lisp"><span class="z-meta z-group z-lisp">  :config
+</span></span><span class="z-source z-lisp"><span class="z-meta z-group z-lisp">  <span class="z-comment z-line z-semicolon z-lisp"><span class="z-punctuation z-definition z-comment z-lisp">;</span>; ... config)
+</span></span></span></code></pre>
+<p>This prompted me to write a systemd service file for the GUI and the other for
+the TUI. Which Emacs lets us do easily: you can name the socket you expose the
+client on.</p>
+<blockquote>
+<p>This is getting out of hand, now there are two of them!</p>
+</blockquote>
+<pre data-lang="conf" class="language-conf z-code"><code class="language-conf" data-lang="conf"><span class="z-source z-genconfig"><span class="z-storage z-type z-genconfig">[Unit]
+</span></span><span class="z-source z-genconfig"><span class="z-meta z-param z-genconfig"><span class="z-variable z-parameter z-genconfig">Description</span><span class="z-keyword z-operator z-genconfig">=</span></span>Emacs text editor (<span class="z-support z-constant z-genconfig">GUI</span>)
+</span><span class="z-source z-genconfig"><span class="z-meta z-param z-genconfig"><span class="z-variable z-parameter z-genconfig">Documentation</span><span class="z-keyword z-operator z-genconfig">=</span></span>info<span class="z-keyword z-operator z-genconfig">:</span>emacs man<span class="z-keyword z-operator z-genconfig">:</span><span class="z-meta z-function z-genconfig"><span class="z-entity z-name z-function z-genconfig">emacs</span>(</span><span class="z-constant z-numeric z-genconfig">1</span>) <span class="z-meta z-url z-genconfig"><span class="z-constant z-other z-genconfig">https://gnu.org/software/emacs</span></span><span class="z-keyword z-operator z-genconfig">/</span>
+</span><span class="z-source z-genconfig">
+</span><span class="z-source z-genconfig"><span class="z-storage z-type z-genconfig">[Service]
+</span></span><span class="z-source z-genconfig"><span class="z-meta z-param z-genconfig"><span class="z-variable z-parameter z-genconfig">Type</span><span class="z-keyword z-operator z-genconfig">=</span></span>notify
+</span><span class="z-source z-genconfig"><span class="z-meta z-param z-genconfig"><span class="z-variable z-parameter z-genconfig">ExecStart</span><span class="z-keyword z-operator z-genconfig">=</span></span><span class="z-keyword z-operator z-genconfig">/</span>usr<span class="z-keyword z-operator z-genconfig">/</span>bin<span class="z-keyword z-operator z-genconfig">/</span>emacs <span class="z-keyword z-operator z-genconfig">-</span><span class="z-keyword z-operator z-genconfig">-</span>fg<span class="z-keyword z-operator z-genconfig">-</span>daemon<span class="z-keyword z-operator z-genconfig">=</span>gui
+</span><span class="z-source z-genconfig"><span class="z-meta z-param z-genconfig"><span class="z-variable z-parameter z-genconfig">ExecStop</span><span class="z-keyword z-operator z-genconfig">=</span></span><span class="z-keyword z-operator z-genconfig">/</span>usr<span class="z-keyword z-operator z-genconfig">/</span>bin<span class="z-keyword z-operator z-genconfig">/</span>emacsclient <span class="z-keyword z-operator z-genconfig">-</span>s gui <span class="z-keyword z-operator z-genconfig">-</span><span class="z-keyword z-operator z-genconfig">-</span>eval <span class="z-string z-quoted z-double z-genconfig">&quot;(kill-emacs)&quot;</span>
+</span><span class="z-source z-genconfig">
+</span><span class="z-source z-genconfig"><span class="z-meta z-comment z-genconfig"><span class="z-comment z-line z-number-sign z-genconfig"># Emacs will exit with status 15 after having received SIGTERM, which
+</span></span></span><span class="z-source z-genconfig"><span class="z-meta z-comment z-genconfig"><span class="z-comment z-line z-number-sign z-genconfig"># is the default &quot;KillSignal&quot; value systemd uses to stop services.
+</span></span></span><span class="z-source z-genconfig"><span class="z-meta z-param z-genconfig"><span class="z-variable z-parameter z-genconfig">SuccessExitStatus</span><span class="z-keyword z-operator z-genconfig">=</span></span><span class="z-constant z-numeric z-genconfig">15</span>
+</span><span class="z-source z-genconfig">
+</span><span class="z-source z-genconfig"><span class="z-meta z-comment z-genconfig"><span class="z-comment z-line z-number-sign z-genconfig"># The location of the SSH auth socket varies by distribution, and some
+</span></span></span><span class="z-source z-genconfig"><span class="z-meta z-comment z-genconfig"><span class="z-comment z-line z-number-sign z-genconfig"># set it from PAM, so don&#39;t override by default.
+</span></span></span><span class="z-source z-genconfig"><span class="z-meta z-comment z-genconfig"><span class="z-comment z-line z-number-sign z-genconfig"># Environment=SSH_AUTH_SOCK=%t/keyring/ssh
+</span></span></span><span class="z-source z-genconfig"><span class="z-meta z-param z-genconfig"><span class="z-variable z-parameter z-genconfig">Restart</span><span class="z-keyword z-operator z-genconfig">=</span></span>on<span class="z-keyword z-operator z-genconfig">-</span>failure
+</span><span class="z-source z-genconfig">
+</span><span class="z-source z-genconfig"><span class="z-storage z-type z-genconfig">[Install]
+</span></span><span class="z-source z-genconfig"><span class="z-meta z-param z-genconfig"><span class="z-variable z-parameter z-genconfig">WantedBy</span><span class="z-keyword z-operator z-genconfig">=</span></span>default<span class="z-keyword z-operator z-genconfig">.</span>target
+</span></code></pre>
+<p>and</p>
+<pre data-lang="conf" class="language-conf z-code"><code class="language-conf" data-lang="conf"><span class="z-source z-genconfig"><span class="z-storage z-type z-genconfig">[Unit]
+</span></span><span class="z-source z-genconfig"><span class="z-meta z-param z-genconfig"><span class="z-variable z-parameter z-genconfig">Description</span><span class="z-keyword z-operator z-genconfig">=</span></span>Emacs text editor (<span class="z-support z-constant z-genconfig">TUI</span>)
+</span><span class="z-source z-genconfig"><span class="z-meta z-param z-genconfig"><span class="z-variable z-parameter z-genconfig">Documentation</span><span class="z-keyword z-operator z-genconfig">=</span></span>info<span class="z-keyword z-operator z-genconfig">:</span>emacs man<span class="z-keyword z-operator z-genconfig">:</span><span class="z-meta z-function z-genconfig"><span class="z-entity z-name z-function z-genconfig">emacs</span>(</span><span class="z-constant z-numeric z-genconfig">1</span>) <span class="z-meta z-url z-genconfig"><span class="z-constant z-other z-genconfig">https://gnu.org/software/emacs</span></span><span class="z-keyword z-operator z-genconfig">/</span>
+</span><span class="z-source z-genconfig">
+</span><span class="z-source z-genconfig"><span class="z-storage z-type z-genconfig">[Service]
+</span></span><span class="z-source z-genconfig"><span class="z-meta z-param z-genconfig"><span class="z-variable z-parameter z-genconfig">Type</span><span class="z-keyword z-operator z-genconfig">=</span></span>notify
+</span><span class="z-source z-genconfig"><span class="z-meta z-param z-genconfig"><span class="z-variable z-parameter z-genconfig">ExecStart</span><span class="z-keyword z-operator z-genconfig">=</span></span><span class="z-keyword z-operator z-genconfig">/</span>usr<span class="z-keyword z-operator z-genconfig">/</span>bin<span class="z-keyword z-operator z-genconfig">/</span>emacs <span class="z-keyword z-operator z-genconfig">-</span><span class="z-keyword z-operator z-genconfig">-</span>fg<span class="z-keyword z-operator z-genconfig">-</span>daemon<span class="z-keyword z-operator z-genconfig">=</span>tui
+</span><span class="z-source z-genconfig"><span class="z-meta z-param z-genconfig"><span class="z-variable z-parameter z-genconfig">ExecStop</span><span class="z-keyword z-operator z-genconfig">=</span></span><span class="z-keyword z-operator z-genconfig">/</span>usr<span class="z-keyword z-operator z-genconfig">/</span>bin<span class="z-keyword z-operator z-genconfig">/</span>emacsclient <span class="z-keyword z-operator z-genconfig">-</span>s tui <span class="z-keyword z-operator z-genconfig">-</span><span class="z-keyword z-operator z-genconfig">-</span>eval <span class="z-string z-quoted z-double z-genconfig">&quot;(kill-emacs)&quot;</span>
+</span><span class="z-source z-genconfig">
+</span><span class="z-source z-genconfig"><span class="z-meta z-comment z-genconfig"><span class="z-comment z-line z-number-sign z-genconfig"># Emacs will exit with status 15 after having received SIGTERM, which
+</span></span></span><span class="z-source z-genconfig"><span class="z-meta z-comment z-genconfig"><span class="z-comment z-line z-number-sign z-genconfig"># is the default &quot;KillSignal&quot; value systemd uses to stop services.
+</span></span></span><span class="z-source z-genconfig"><span class="z-meta z-param z-genconfig"><span class="z-variable z-parameter z-genconfig">SuccessExitStatus</span><span class="z-keyword z-operator z-genconfig">=</span></span><span class="z-constant z-numeric z-genconfig">15</span>
+</span><span class="z-source z-genconfig">
+</span><span class="z-source z-genconfig"><span class="z-meta z-comment z-genconfig"><span class="z-comment z-line z-number-sign z-genconfig"># The location of the SSH auth socket varies by distribution, and some
+</span></span></span><span class="z-source z-genconfig"><span class="z-meta z-comment z-genconfig"><span class="z-comment z-line z-number-sign z-genconfig"># set it from PAM, so don&#39;t override by default.
+</span></span></span><span class="z-source z-genconfig"><span class="z-meta z-comment z-genconfig"><span class="z-comment z-line z-number-sign z-genconfig"># Environment=SSH_AUTH_SOCK=%t/keyring/ssh
+</span></span></span><span class="z-source z-genconfig"><span class="z-meta z-param z-genconfig"><span class="z-variable z-parameter z-genconfig">Restart</span><span class="z-keyword z-operator z-genconfig">=</span></span>on<span class="z-keyword z-operator z-genconfig">-</span>failure
+</span><span class="z-source z-genconfig">
+</span><span class="z-source z-genconfig"><span class="z-storage z-type z-genconfig">[Install]
+</span></span><span class="z-source z-genconfig"><span class="z-meta z-param z-genconfig"><span class="z-variable z-parameter z-genconfig">WantedBy</span><span class="z-keyword z-operator z-genconfig">=</span></span>default<span class="z-keyword z-operator z-genconfig">.</span>target
+</span></code></pre>
+<p>As a result, the desktop file needs to refer to the <code>gui</code> client and the editor
+in the terminal needs to refer to the <code>tui</code> client.</p>
+<pre data-lang="conf" class="language-conf z-code"><code class="language-conf" data-lang="conf"><span class="z-source z-genconfig"><span class="z-storage z-type z-genconfig">[Desktop Entry]
+</span></span><span class="z-source z-genconfig"><span class="z-meta z-param z-genconfig"><span class="z-variable z-parameter z-genconfig">Name</span><span class="z-keyword z-operator z-genconfig">=</span></span>Emacs (Client)
+</span><span class="z-source z-genconfig"><span class="z-meta z-param z-genconfig"><span class="z-variable z-parameter z-genconfig">GenericName</span><span class="z-keyword z-operator z-genconfig">=</span></span>Text Editor
+</span><span class="z-source z-genconfig"><span class="z-meta z-param z-genconfig"><span class="z-variable z-parameter z-genconfig">Comment</span><span class="z-keyword z-operator z-genconfig">=</span></span>Edit text
+</span><span class="z-source z-genconfig"><span class="z-meta z-param z-genconfig"><span class="z-variable z-parameter z-genconfig">MimeType</span><span class="z-keyword z-operator z-genconfig">=</span></span><span class="z-support z-type z-genconfig">text/english</span>;<span class="z-support z-type z-genconfig">text/plain</span>;<span class="z-support z-type z-genconfig">text/x-makefile</span>;<span class="z-support z-type z-genconfig">text/x-c++hdr</span>;<span class="z-support z-type z-genconfig">text/x-c++src</span>;<span class="z-support z-type z-genconfig">text/x-chdr</span>;<span class="z-support z-type z-genconfig">text/x-csrc</span>;<span class="z-support z-type z-genconfig">text/x-java</span>;<span class="z-support z-type z-genconfig">text/x-moc</span>;<span class="z-support z-type z-genconfig">text/x-pascal</span>;<span class="z-support z-type z-genconfig">text/x-tcl</span>;<span class="z-support z-type z-genconfig">text/x-tex</span>;<span class="z-support z-type z-genconfig">application/x-shellscript</span>;<span class="z-support z-type z-genconfig">text/x-c</span>;<span class="z-support z-type z-genconfig">text/x-c</span><span class="z-keyword z-operator z-genconfig">+</span><span class="z-keyword z-operator z-genconfig">+</span>;<span class="z-support z-type z-genconfig">x-scheme-handler/org-protocol</span>;
+</span><span class="z-source z-genconfig"><span class="z-meta z-param z-genconfig"><span class="z-variable z-parameter z-genconfig">Exec</span><span class="z-keyword z-operator z-genconfig">=</span></span>sh <span class="z-keyword z-operator z-genconfig">-</span>c <span class="z-string z-quoted z-double z-genconfig">&quot;if [ -n \<span class="z-constant z-character z-genconfig">\&quot;</span>\\$*\<span class="z-constant z-character z-genconfig">\&quot;</span> ]; then exec /usr/local/bin/emacsclient -s gui --reuse-frame \<span class="z-constant z-character z-genconfig">\&quot;</span>\\$@\<span class="z-constant z-character z-genconfig">\&quot;</span>; else exec /usr/local/bin/emacsclient -s gui --create-frame; fi&quot;</span> sh <span class="z-storage z-source z-genconfig">%F</span>
+</span><span class="z-source z-genconfig"><span class="z-meta z-param z-genconfig"><span class="z-variable z-parameter z-genconfig">Icon</span><span class="z-keyword z-operator z-genconfig">=</span></span>emacs
+</span><span class="z-source z-genconfig"><span class="z-meta z-param z-genconfig"><span class="z-variable z-parameter z-genconfig">Type</span><span class="z-keyword z-operator z-genconfig">=</span></span>Application
+</span><span class="z-source z-genconfig"><span class="z-meta z-param z-genconfig"><span class="z-variable z-parameter z-genconfig">Terminal</span><span class="z-keyword z-operator z-genconfig">=</span></span><span class="z-constant z-language z-genconfig">false</span>
+</span><span class="z-source z-genconfig"><span class="z-meta z-param z-genconfig"><span class="z-variable z-parameter z-genconfig">Categories</span><span class="z-keyword z-operator z-genconfig">=</span></span>Development;TextEditor;
+</span><span class="z-source z-genconfig"><span class="z-meta z-param z-genconfig"><span class="z-variable z-parameter z-genconfig">StartupNotify</span><span class="z-keyword z-operator z-genconfig">=</span></span><span class="z-constant z-language z-genconfig">true</span>
+</span><span class="z-source z-genconfig"><span class="z-meta z-param z-genconfig"><span class="z-variable z-parameter z-genconfig">StartupWMClass</span><span class="z-keyword z-operator z-genconfig">=</span></span>Emacs
+</span><span class="z-source z-genconfig"><span class="z-meta z-param z-genconfig"><span class="z-variable z-parameter z-genconfig">Keywords</span><span class="z-keyword z-operator z-genconfig">=</span></span>emacsclient;
+</span><span class="z-source z-genconfig"><span class="z-meta z-param z-genconfig"><span class="z-variable z-parameter z-genconfig">Actions</span><span class="z-keyword z-operator z-genconfig">=</span></span>new<span class="z-keyword z-operator z-genconfig">-</span>window;new<span class="z-keyword z-operator z-genconfig">-</span>instance;
+</span><span class="z-source z-genconfig">
+</span><span class="z-source z-genconfig"><span class="z-storage z-type z-genconfig">[Desktop Action new-window]
+</span></span><span class="z-source z-genconfig"><span class="z-meta z-param z-genconfig"><span class="z-variable z-parameter z-genconfig">Name</span><span class="z-keyword z-operator z-genconfig">=</span></span>New Window
+</span><span class="z-source z-genconfig"><span class="z-meta z-param z-genconfig"><span class="z-variable z-parameter z-genconfig">Exec</span><span class="z-keyword z-operator z-genconfig">=</span></span><span class="z-keyword z-operator z-genconfig">/</span>usr<span class="z-keyword z-operator z-genconfig">/</span>local<span class="z-keyword z-operator z-genconfig">/</span>bin<span class="z-keyword z-operator z-genconfig">/</span>emacsclient <span class="z-keyword z-operator z-genconfig">-</span>s gui <span class="z-keyword z-operator z-genconfig">-</span><span class="z-keyword z-operator z-genconfig">-</span>create<span class="z-keyword z-operator z-genconfig">-</span>frame <span class="z-storage z-source z-genconfig">%F</span>
+</span><span class="z-source z-genconfig">
+</span><span class="z-source z-genconfig"><span class="z-storage z-type z-genconfig">[Desktop Action new-instance]
+</span></span><span class="z-source z-genconfig"><span class="z-meta z-param z-genconfig"><span class="z-variable z-parameter z-genconfig">Name</span><span class="z-keyword z-operator z-genconfig">=</span></span>New Instance
+</span><span class="z-source z-genconfig"><span class="z-meta z-comment z-genconfig"><span class="z-comment z-line z-number-sign z-genconfig"># Use background daemon that will die when the frame is closed
+</span></span></span><span class="z-source z-genconfig"><span class="z-meta z-param z-genconfig"><span class="z-variable z-parameter z-genconfig">Exec</span><span class="z-keyword z-operator z-genconfig">=</span></span>emacs <span class="z-keyword z-operator z-genconfig">-</span><span class="z-keyword z-operator z-genconfig">-</span>daemon<span class="z-keyword z-operator z-genconfig">=</span>gui<span class="z-keyword z-operator z-genconfig">-</span>temp <span class="z-keyword z-operator z-genconfig">-</span><span class="z-support z-constant z-genconfig">Q</span> &amp;&amp; emacsclient <span class="z-keyword z-operator z-genconfig">-</span>s gui<span class="z-keyword z-operator z-genconfig">-</span>temp <span class="z-keyword z-operator z-genconfig">-</span><span class="z-keyword z-operator z-genconfig">-</span>create<span class="z-keyword z-operator z-genconfig">-</span>frame <span class="z-storage z-source z-genconfig">%F</span>
+</span></code></pre>
+<pre data-lang="sh" class="language-sh z-code"><code class="language-sh" data-lang="sh"><span class="z-source z-shell z-bash"><span class="z-comment z-line z-number-sign z-shell"><span class="z-punctuation z-definition z-comment z-begin z-shell">#</span></span><span class="z-comment z-line z-number-sign z-shell">!/bin/sh</span><span class="z-comment z-line z-number-sign z-shell">
+</span></span><span class="z-source z-shell z-bash"><span class="z-meta z-function-call z-shell"><span class="z-support z-function z-exec z-shell">exec</span></span><span class="z-meta z-function-call z-arguments z-shell"> emacsclient -s tui -t -a=<span class="z-string z-quoted z-double z-shell"><span class="z-punctuation z-definition z-string z-begin z-shell">&quot;</span><span class="z-punctuation z-definition z-string z-end z-shell">&quot;</span></span> <span class="z-string z-quoted z-double z-shell"><span class="z-punctuation z-definition z-string z-begin z-shell">&quot;</span><span class="z-meta z-group z-expansion z-parameter z-shell"><span class="z-punctuation z-definition z-variable z-shell">$</span><span class="z-variable z-language z-shell">@</span></span><span class="z-punctuation z-definition z-string z-end z-shell">&quot;</span></span></span>
+</span></code></pre>
+<p>Finally, you can reload the systemd daemon and start then enable the services:</p>
+<pre data-lang="sh" class="language-sh z-code"><code class="language-sh" data-lang="sh"><span class="z-source z-shell z-bash"><span class="z-meta z-function-call z-shell"><span class="z-variable z-function z-shell">systemctl</span></span><span class="z-meta z-function-call z-arguments z-shell"><span class="z-variable z-parameter z-option z-shell"><span class="z-punctuation z-definition z-parameter z-shell"> --</span>user</span> daemon-reload</span>
+</span><span class="z-source z-shell z-bash"><span class="z-meta z-function-call z-shell"><span class="z-variable z-function z-shell">systemctl</span></span><span class="z-meta z-function-call z-arguments z-shell"><span class="z-variable z-parameter z-option z-shell"><span class="z-punctuation z-definition z-parameter z-shell"> --</span>user</span> enable emacsd-gui.service emacsd-tui.service</span>
+</span><span class="z-source z-shell z-bash"><span class="z-meta z-function-call z-shell"><span class="z-variable z-function z-shell">systemctl</span></span><span class="z-meta z-function-call z-arguments z-shell"><span class="z-variable z-parameter z-option z-shell"><span class="z-punctuation z-definition z-parameter z-shell"> --</span>user</span> start emacsd-gui.service emacsd-tui.service</span>
+</span></code></pre>
+<p>That's all for me, I honestly didn't think that trying to fix
+<kbd>Ctrl+Backspace</kbd> would become such an adventure.</p>
+
+
+      </main>
+    <footer>
+      Nathan Furnal © 2025
+    </footer>
+  </body>
+</html>
