@@ -17,3 +17,6 @@ pytest
 regex
 systemd
 unittest
+Hynek
+Schlawack
+Seemann
