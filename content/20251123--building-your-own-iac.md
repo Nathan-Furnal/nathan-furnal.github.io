@@ -115,11 +115,15 @@ Shell"](https://www.destroyallsoftware.com/screencasts/catalog/functional-core-i
 which I will reference multiple times.
 
 In order to test out a vertical slice, what I immediately want is testing that I
-can round-trip my data in either direction. Meaning that I want to serialize the
+can round-trip data in either direction. Meaning that I want to serialize the
 YAML to a valid series of requests to the API and that I want to receive data
 from the API to compare to the YAML. The latter being used to compare the state
 between the YAML file, which should be the ground truth and the API provider
 (here, GitHub); this is useful for diagnostics without any state change as well.
+
+There are many ways to slice this but the way I want to approach it, is by
+having a common `Provider` interface where implementations will retrieve data
+from different sources and then reconcile the differences when possible.
 
 ## Building in three steps
 
