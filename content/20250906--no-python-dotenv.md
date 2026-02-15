@@ -24,7 +24,7 @@ the reproach is about the most common usage.
 
 A simple application structure can look like this:
 
-```
+```text
 .
 ├── app
 │   ├── conf.py
@@ -62,7 +62,7 @@ def get_dotenv(fp: Path) -> dict[str, str]:
 
 Now, the `.env` file has the following content,
 
-```
+```text
 APP_ENV=dev
 DB_NAME=my_db
 DB_USER=root
@@ -86,7 +86,7 @@ Which, when run with `python main.py` in an activated virtual environment or via
 For some, this might just be enough! Others though, might benefit from expanding
 variables as shown in the `python-dotenv` documentation, where
 
-```
+```text
 DOMAIN=example.org
 ADMIN_EMAIL=admin@${DOMAIN}
 ROOT_URL=${DOMAIN}/app
@@ -100,7 +100,7 @@ is expanded to the following object:
 
 The library takes care to properly parse variables, such that this file content
 
-```
+```text
 DOMAIN=example.org
 ADMIN_EMAIL=admin@${DOMAIN}
 COMPOUND=${ADMIN_EMAIL}/var/stuff/${DOMAIN}
@@ -237,7 +237,7 @@ will fail on missing keys, which is what I usually want. I can also use the
 callable values of the annotations to convert the environment file content to
 the right type and then return the newly created object.
 
-In `main.py`, with the  first `.env` I presented, let's do
+In `main.py`, with the first `.env` I presented, let's do
 
 ```python
 import conf

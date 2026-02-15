@@ -1,0 +1,15 @@
+[global]
+exclude = ["node_modules", "vendor", ".git", "content/about.md"]
+line_length = 89
+disable = ["MD041"]
+
+[MD013]
+code_blocks = false  # Don't check code blocks
+
+[MD033]  # No inline HTML
+allowed_elements = ["kbd"]
+
+[MD041]
+level = 2  # Heading level required (1-6, default: 1)
+front-matter-title = "title"  # Front matter field to use as title
+front-matter-title-pattern = "^(title|header):"  # Regex pattern to match title fields in front matter

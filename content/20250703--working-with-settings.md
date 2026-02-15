@@ -120,7 +120,7 @@ of `dataclasses`.
 Of course, you might want or need to read the configuration from a file, let's
 say a `.env` one. Such a file will look like this:
 
-```
+```text
 DB_DRIVERNAME=postgresql+psycopg
 DB_USERNAME=user
 ...

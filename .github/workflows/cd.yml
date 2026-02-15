@@ -17,10 +17,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3  # v6.0.0
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
 
       - name: Build and Deploy
-        uses: shalzz/zola-deploy-action@90cd842959b82e0c012601be18ae249d6cdb1669  # v0.21.0
+        uses: shalzz/zola-deploy-action@74526e63f38f84b82476349bbcd886b82040ff98  # v0.22.1
         env:
           PAGES_BRANCH: gh-pages
           TOKEN: ${{ secrets.GITHUB_TOKEN }}

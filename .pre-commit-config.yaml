@@ -3,32 +3,55 @@ repos:
   rev: v6.0.0
   hooks:
   - id: check-added-large-files
+    priority: 0
     args: ['--maxkb=5000']
   - id: trailing-whitespace
+    priority: 0
   - id: check-toml
+    priority: 0
   - id: end-of-file-fixer
+    priority: 0
   - id: trailing-whitespace
+    priority: 0
 
 - repo: https://github.com/rhysd/actionlint
-  rev: v1.7.9
+  rev: v1.7.11
   hooks:
   - id: actionlint
+    priority: 0
 
 - repo: https://github.com/errata-ai/vale
-  rev: v3.13.0
+  rev: v3.13.1
   hooks:
   - id: vale
+    priority: 0
     name: vale sync
     pass_filenames: false
     args: [sync]
   - id: vale
+    priority: 1
     args: [--output=line, --minAlertLevel=error]
 
 - repo: https://github.com/amperser/proselint
   rev: v0.16.0
   hooks:
   - id: proselint
+    priority: 0
     name: A linter for prose
     description: This hook checks language usage and style in text files.
     entry: proselint
     types: [markdown,rst,text]
+
+- repo: https://github.com/rvben/rumdl-pre-commit
+  rev: v0.1.21
+  hooks:
+  - id: rumdl      # Lint only
+    priority: 1
+  - id: rumdl-fmt  # Auto-format
+    priority: 0
+
+- repo: https://github.com/crate-ci/typos
+  rev: v1.43.4
+  hooks:
+    - id: typos
+      priority: 0
