@@ -1,4 +1,6 @@
 Ctrl
+cyclopts
+dataclasses
 DB
 FastAPI
 Github
@@ -11,6 +13,7 @@ config
 filepath
 ghostty
 pathname
+Pydantic
 pydantic
 pytest
 regex
