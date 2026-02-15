@@ -32,7 +32,7 @@ and the [ghostty terminal emulator](https://ghostty.org/).
 
 With the following configuration, in your initialization file:
 
-```el
+```elisp
 (use-package kkp
   :ensure t
   :config
@@ -69,7 +69,7 @@ To make it clear that I'll use it for my user, I'll copy the file under
 example by adding an environment file only for that service (useful to set the
 path among other things).
 
-```conf
+```systemd
 [Unit]
 Description=Emacs text editor (GUI)
 Documentation=info:emacs man:emacs(1) https://gnu.org/software/emacs/
@@ -123,7 +123,7 @@ the client if it exists and create it otherwise. It lives in
 that'll be picked up by system instead of that one, you should use
 `~/.local/share/applications/emacsclient.destkop`.
 
-```conf
+```systemd
 [Desktop Entry]
 Name=Emacs (Client)
 GenericName=Text Editor
@@ -165,7 +165,7 @@ I generally change my theme based on the time of day in the GUI but I want it to
 stay a dark theme in the CLI in general. I also want to load some packages only
 in graphical mode, like `org-mode`. For example,
 
-```el
+```elisp
 (use-package org
   :pin gnu
   :ensure nil
@@ -184,7 +184,7 @@ client on.
 
 > This is getting out of hand, now there are two of them!
 
-```conf
+```systemd
 [Unit]
 Description=Emacs text editor (GUI)
 Documentation=info:emacs man:emacs(1) https://gnu.org/software/emacs/
@@ -209,7 +209,7 @@ WantedBy=default.target
 
 and
 
-```conf
+```systemd
 [Unit]
 Description=Emacs text editor (TUI)
 Documentation=info:emacs man:emacs(1) https://gnu.org/software/emacs/
@@ -235,7 +235,7 @@ WantedBy=default.target
 As a result, the desktop file needs to refer to the `gui` client and the editor
 in the terminal needs to refer to the `tui` client.
 
-```conf
+```systemd
 [Desktop Entry]
 Name=Emacs (Client)
 GenericName=Text Editor
