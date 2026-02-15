@@ -13,25 +13,19 @@ title = "Gribouillis"
 description = "Mindless sketches ✐ᝰ"
 author = "Nathan Furnal"
 
-[markdown]
-# Whether to do syntax highlighting
-# Theme can be customised by setting the `highlight_theme` variable to a theme supported by Zola
-highlight_code = true
-highlight_theme = "css"
-highlight_themes_css = [
-  { theme = "dracula", filename = "css/syntax-theme-dark.css" },
-  { theme = "inspired-github", filename = "css/syntax-theme-light.css" },
-]
-
-# Whether external links are to be opened in a new tab
-# If this is true, a `rel="noopener"` will always automatically be added for security reasons
-external_links_target_blank = true
-
 # Taxonomies
 taxonomies = [
     { name = "tags", feed = true },
     { name = "categories", feed = true },
 ]
+
+[markdown]
+highlighting.light_theme = "github-light"
+highlighting.dark_theme = "github-dark"
+
+# Whether external links are to be opened in a new tab
+# If this is true, a `rel="noopener"` will always automatically be added for security reasons
+external_links_target_blank = true
 
 [extra]
 # Put all your custom variables here
