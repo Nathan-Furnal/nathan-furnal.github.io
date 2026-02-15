@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+      <!-- Title handling -->
+    <title>You might not need python-dotenv | Gribouillis</title>
+    <!-- Meta description -->
+    <meta name="description" content="Mindless sketches ✐ᝰ">
+    <link rel="stylesheet" href="https://blog.natfu.be/css/main.css">
+      <!-- RSS Feed -->
+      
+    <link rel="alternate" type="application/rss+xml" title="RSS" href="https://blog.natfu.be/rss.xml">
+      
+  </head>
+  <body>
+    <header>
+      <div class="nav-container">
+        <div class="nav-heading">
+          <div class="font-3rem">Gribouillis</div>
+          <p>Mindless sketches ✐ᝰ</p>
+        </div>
+        <div class="nav-content">
+          <nav>
+            <a href="https://blog.natfu.be">Posts</a>
+            <a href="https://blog.natfu.be/about">About</a>
+          </nav>
+        </div>
+      </div>
+    </header>
+    <main role="main">
+      
+<h1 class="title">
+  You might not need python-dotenv
+</h1>
+    <div class="post-meta">
+      <time class="published" datetime="2025-09-06">
+        Published: September 06, 2025
+      </time>
+
+      
+    </div>
+<hr class="separator">
+<p>I often see <a rel="noopener external" target="_blank" href="https://github.com/theskumar/python-dotenv"><code>python-dotenv</code></a> as a
+dependency in applications where one needs to load the <code>.env</code> and think to
+myself: 'Why?'. It's a convenient package but the usage most applications have
+of it can easily be implemented which is what I'll show here. Note that I'm
+talking about applications, not libraries you'd want to package for others.</p>
+<p>Another thing that bugs me, is that it keeps easing a pattern I don't think
+people should use: loading configurations from the environment. Your settings
+and/or configurations should be immutable Python objects, not read from a global
+environment that can change under your feet, but <a rel="noopener external" target="_blank" href="https://blog.natfu.be/managing-settings-in-python-projects/">I've ranted about that
+before</a>. Also,
+<code>python-dotenv</code> provides ways to load the values and not mutate the environment;
+the reproach is about the most common usage.</p>
+<h2 id="building-our-own-dotenv">Building our own <code>dotenv</code></h2>
+<p>A simple application structure can look like this:</p>
+<pre class="giallo" style="color-scheme: light dark; color: light-dark(#24292E, #E1E4E8); background-color: light-dark(#FFFFFF, #24292E);"><code data-lang="plain"><span class="giallo-l"><span>.</span></span>
+<span class="giallo-l"><span>├── app</span></span>
+<span class="giallo-l"><span>│   ├── conf.py</span></span>
+<span class="giallo-l"><span>│   └── main.py</span></span>
+<span class="giallo-l"><span>├── .env</span></span>
+<span class="giallo-l"><span>├── pyproject.toml</span></span>
+<span class="giallo-l"><span>├── tests</span></span>
+<span class="giallo-l"><span>└── uv.lock</span></span></code></pre>
+<p>Where <code>conf.py</code> is the file of interest. Within, we can start with a simple
+implementation for reading the <code>.env</code> file(s).</p>
+<p>Since we know and control the structure of the project, it's possible to find
+the root of the project which is where you'll find <code>.env</code> files. We'll get
+started and use
+<a rel="noopener external" target="_blank" href="https://docs.python.org/3/reference/datamodel.html#module.__file__"><code>__file__</code></a>
+which, following the docs:</p>
+<blockquote>
+<p>indicates the pathname of the file from which the module was loaded (if loaded from a file)</p>
+</blockquote>
+<p>We'll also read from the environment file and split the values on the equal
+character.</p>
+<pre class="giallo" style="color-scheme: light dark; color: light-dark(#24292E, #E1E4E8); background-color: light-dark(#FFFFFF, #24292E);"><code data-lang="python"><span class="giallo-l"><span style="color: light-dark(#D73A49, #F97583);">from</span><span> pathlib</span><span style="color: light-dark(#D73A49, #F97583);"> import</span><span> Path</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span style="color: light-dark(#005CC5, #79B8FF);">ROOT_DIR</span><span style="color: light-dark(#D73A49, #F97583);"> =</span><span> Path</span><span>(</span><span style="color: light-dark(#005CC5, #79B8FF);">__file__</span><span>)</span><span>.</span><span>parents</span><span>[</span><span style="color: light-dark(#005CC5, #79B8FF);">1</span><span>]</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span style="color: light-dark(#D73A49, #F97583);">def</span><span style="color: light-dark(#6F42C1, #B392F0);"> get_dotenv</span><span>(</span><span>fp</span><span>:</span><span> Path</span><span>)</span><span> -&gt;</span><span> dict</span><span>[</span><span style="color: light-dark(#005CC5, #79B8FF);">str</span><span>,</span><span style="color: light-dark(#005CC5, #79B8FF);"> str</span><span>]</span><span>:</span></span>
+<span class="giallo-l"><span>    content</span><span style="color: light-dark(#D73A49, #F97583);"> =</span><span> fp</span><span>.</span><span>read_text</span><span>(</span><span>)</span></span>
+<span class="giallo-l"><span>    splitvals</span><span style="color: light-dark(#D73A49, #F97583);"> =</span><span> [</span><span>x</span><span>.</span><span>split</span><span>(</span><span style="color: light-dark(#032F62, #9ECBFF);">&quot;</span><span style="color: light-dark(#032F62, #9ECBFF);">=</span><span style="color: light-dark(#032F62, #9ECBFF);">&quot;</span><span>)</span><span style="color: light-dark(#D73A49, #F97583);"> for</span><span> x</span><span style="color: light-dark(#D73A49, #F97583);"> in</span><span> content</span><span>.</span><span>splitlines</span><span>(</span><span>)</span><span>]</span></span>
+<span class="giallo-l"><span style="color: light-dark(#D73A49, #F97583);">    return</span><span> {</span><span>k</span><span>.</span><span>strip</span><span>(</span><span>)</span><span>:</span><span> v</span><span>.</span><span>strip</span><span>(</span><span>)</span><span style="color: light-dark(#D73A49, #F97583);"> for</span><span> k</span><span>,</span><span> v</span><span style="color: light-dark(#D73A49, #F97583);"> in</span><span> splitvals</span><span>}</span></span></code></pre>
+<p>Now, the <code>.env</code> file has the following content,</p>
+<pre class="giallo" style="color-scheme: light dark; color: light-dark(#24292E, #E1E4E8); background-color: light-dark(#FFFFFF, #24292E);"><code data-lang="plain"><span class="giallo-l"><span>APP_ENV=dev</span></span>
+<span class="giallo-l"><span>DB_NAME=my_db</span></span>
+<span class="giallo-l"><span>DB_USER=root</span></span>
+<span class="giallo-l"><span>DB_PASSWORD=passw</span></span>
+<span class="giallo-l"><span>DB_PORT=1111</span></span>
+<span class="giallo-l"><span>OTHER_VAL=hello</span></span>
+<span class="giallo-l"><span>IRRELEVANT=&#39;abcdefghijklm&#39;</span></span></code></pre>
+<p>and the <code>main.py</code> has</p>
+<pre class="giallo" style="color-scheme: light dark; color: light-dark(#24292E, #E1E4E8); background-color: light-dark(#FFFFFF, #24292E);"><code data-lang="python"><span class="giallo-l"><span style="color: light-dark(#D73A49, #F97583);">import</span><span> conf</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span style="color: light-dark(#005CC5, #79B8FF);">print</span><span>(</span><span>conf</span><span>.</span><span>get_dotenv</span><span>(</span><span>conf</span><span>.</span><span style="color: light-dark(#005CC5, #79B8FF);">ROOT_DIR</span><span style="color: light-dark(#D73A49, #F97583);"> /</span><span style="color: light-dark(#032F62, #9ECBFF);"> &quot;</span><span style="color: light-dark(#032F62, #9ECBFF);">.env</span><span style="color: light-dark(#032F62, #9ECBFF);">&quot;</span><span>)</span><span>)</span></span></code></pre>
+<p>Which, when run with <code>python main.py</code> in an activated virtual environment or via
+<code>uv run main.py</code> will print the content of the <code>.env</code> as a dictionary.</p>
+<p>For some, this might just be enough! Others though, might benefit from expanding
+variables as shown in the <code>python-dotenv</code> documentation, where</p>
+<pre class="giallo" style="color-scheme: light dark; color: light-dark(#24292E, #E1E4E8); background-color: light-dark(#FFFFFF, #24292E);"><code data-lang="plain"><span class="giallo-l"><span>DOMAIN=example.org</span></span>
+<span class="giallo-l"><span>ADMIN_EMAIL=admin@${DOMAIN}</span></span>
+<span class="giallo-l"><span>ROOT_URL=${DOMAIN}/app</span></span></code></pre>
+<p>is expanded to the following object:</p>
+<pre class="giallo" style="color-scheme: light dark; color: light-dark(#24292E, #E1E4E8); background-color: light-dark(#FFFFFF, #24292E);"><code data-lang="python"><span class="giallo-l"><span>{</span><span style="color: light-dark(#032F62, #9ECBFF);">&#39;</span><span style="color: light-dark(#032F62, #9ECBFF);">DOMAIN</span><span style="color: light-dark(#032F62, #9ECBFF);">&#39;</span><span>:</span><span style="color: light-dark(#032F62, #9ECBFF);"> &#39;</span><span style="color: light-dark(#032F62, #9ECBFF);">example.org</span><span style="color: light-dark(#032F62, #9ECBFF);">&#39;</span><span>,</span><span style="color: light-dark(#032F62, #9ECBFF);"> &#39;</span><span style="color: light-dark(#032F62, #9ECBFF);">ADMIN_EMAIL</span><span style="color: light-dark(#032F62, #9ECBFF);">&#39;</span><span>:</span><span style="color: light-dark(#032F62, #9ECBFF);"> &#39;</span><span style="color: light-dark(#032F62, #9ECBFF);">admin@example.org</span><span style="color: light-dark(#032F62, #9ECBFF);">&#39;</span><span>,</span><span style="color: light-dark(#032F62, #9ECBFF);"> &#39;</span><span style="color: light-dark(#032F62, #9ECBFF);">ROOT_URL</span><span style="color: light-dark(#032F62, #9ECBFF);">&#39;</span><span>:</span><span style="color: light-dark(#032F62, #9ECBFF);"> &#39;</span><span style="color: light-dark(#032F62, #9ECBFF);">example.org/app</span><span style="color: light-dark(#032F62, #9ECBFF);">&#39;</span><span>}</span></span></code></pre>
+<p>The library takes care to properly parse variables, such that this file content</p>
+<pre class="giallo" style="color-scheme: light dark; color: light-dark(#24292E, #E1E4E8); background-color: light-dark(#FFFFFF, #24292E);"><code data-lang="plain"><span class="giallo-l"><span>DOMAIN=example.org</span></span>
+<span class="giallo-l"><span>ADMIN_EMAIL=admin@${DOMAIN}</span></span>
+<span class="giallo-l"><span>COMPOUND=${ADMIN_EMAIL}/var/stuff/${DOMAIN}</span></span></code></pre>
+<p>correctly expands <code>COMPOUND</code> which requires <code>ADMIN_EMAIL</code> to expand <code>DOMAIN</code>.</p>
+<p>The above implementation is clearly correct and the kind of behavior I would
+expect from such a library but what if I could get away with only expanding
+variables without allowing nesting? After all, this kind of nesting rarely comes
+up.</p>
+<h3 id="expanding-variables">Expanding variables</h3>
+<p>In order to expand variables properly, I would need to write a parser. But to
+hack my way around one level of variable definition, I can use <a rel="noopener external" target="_blank" href="https://docs.python.org/3/howto/regex.html">regular
+expressions</a>.</p>
+<p>At a high level, the solution is to first get the <code>.env</code> content into a
+dictionary as a first pass, then find all expressions like <code>${&lt;something&gt;}</code> and
+substitute that back into the raw content.</p>
+<p>Python even lets us pass a function when substituting strings with regular
+expressions, which leads to a short implementation:</p>
+<pre class="giallo" style="color-scheme: light dark; color: light-dark(#24292E, #E1E4E8); background-color: light-dark(#FFFFFF, #24292E);"><code data-lang="python"><span class="giallo-l"><span style="color: light-dark(#D73A49, #F97583);">from</span><span> pathlib</span><span style="color: light-dark(#D73A49, #F97583);"> import</span><span> Path</span></span>
+<span class="giallo-l"><span style="color: light-dark(#D73A49, #F97583);">import</span><span> re</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span style="color: light-dark(#D73A49, #F97583);">def</span><span style="color: light-dark(#6F42C1, #B392F0);"> get_dotenv</span><span>(</span><span>fp</span><span>:</span><span> Path</span><span>)</span><span> -&gt;</span><span> dict</span><span>[</span><span style="color: light-dark(#005CC5, #79B8FF);">str</span><span>,</span><span style="color: light-dark(#005CC5, #79B8FF);"> str</span><span>]</span><span>:</span></span>
+<span class="giallo-l"><span>    content</span><span style="color: light-dark(#D73A49, #F97583);"> =</span><span> fp</span><span>.</span><span>read_text</span><span>(</span><span>)</span></span>
+<span class="giallo-l"><span>    pat</span><span style="color: light-dark(#D73A49, #F97583);"> =</span><span> re</span><span>.</span><span>compile</span><span>(</span><span style="color: light-dark(#D73A49, #F97583);">r</span><span style="color: light-dark(#032F62, #9ECBFF);">&quot;</span><span style="color: light-dark(#22863A, #85E89D);font-weight: bold;">\$</span><span style="color: light-dark(#22863A, #85E89D);font-weight: bold;">\{</span><span style="color: light-dark(#005CC5, #79B8FF);">\b</span><span style="color: light-dark(#005CC5, #79B8FF);">.</span><span style="color: light-dark(#D73A49, #F97583);">+</span><span style="color: light-dark(#005CC5, #79B8FF);">\b</span><span style="color: light-dark(#22863A, #85E89D);font-weight: bold;">\}</span><span style="color: light-dark(#032F62, #9ECBFF);">&quot;</span><span>)</span></span>
+<span class="giallo-l"><span>    splitvals</span><span style="color: light-dark(#D73A49, #F97583);"> =</span><span> [</span><span>x</span><span>.</span><span>split</span><span>(</span><span style="color: light-dark(#032F62, #9ECBFF);">&quot;</span><span style="color: light-dark(#032F62, #9ECBFF);">=</span><span style="color: light-dark(#032F62, #9ECBFF);">&quot;</span><span>)</span><span style="color: light-dark(#D73A49, #F97583);"> for</span><span> x</span><span style="color: light-dark(#D73A49, #F97583);"> in</span><span> content</span><span>.</span><span>splitlines</span><span>(</span><span>)</span><span>]</span></span>
+<span class="giallo-l"><span>    raw</span><span style="color: light-dark(#D73A49, #F97583);"> =</span><span> {</span><span>k</span><span>.</span><span>strip</span><span>(</span><span>)</span><span>:</span><span> v</span><span>.</span><span>strip</span><span>(</span><span>)</span><span style="color: light-dark(#D73A49, #F97583);"> for</span><span> k</span><span>,</span><span> v</span><span style="color: light-dark(#D73A49, #F97583);"> in</span><span> splitvals</span><span>}</span></span>
+<span class="giallo-l"><span style="color: light-dark(#D73A49, #F97583);">    def</span><span style="color: light-dark(#6F42C1, #B392F0);"> varexpand</span><span>(</span><span>matchobj</span><span>:</span><span> re</span><span>.</span><span>Match</span><span>[</span><span style="color: light-dark(#005CC5, #79B8FF);">str</span><span>]</span><span>)</span><span> -&gt;</span><span style="color: light-dark(#005CC5, #79B8FF);"> str</span><span>:</span></span>
+<span class="giallo-l"><span>        strmatch</span><span style="color: light-dark(#D73A49, #F97583);"> =</span><span> matchobj</span><span>.</span><span>group</span><span>(</span><span style="color: light-dark(#005CC5, #79B8FF);">0</span><span>)</span><span>.</span><span>lstrip</span><span>(</span><span style="color: light-dark(#032F62, #9ECBFF);">&quot;</span><span style="color: light-dark(#032F62, #9ECBFF);">${</span><span style="color: light-dark(#032F62, #9ECBFF);">&quot;</span><span>)</span><span>.</span><span>rstrip</span><span>(</span><span style="color: light-dark(#032F62, #9ECBFF);">&quot;</span><span style="color: light-dark(#032F62, #9ECBFF);">}</span><span style="color: light-dark(#032F62, #9ECBFF);">&quot;</span><span>)</span></span>
+<span class="giallo-l"><span style="color: light-dark(#D73A49, #F97583);">        return</span><span> raw</span><span>.</span><span>get</span><span>(</span><span>strmatch</span><span>,</span><span style="color: light-dark(#032F62, #9ECBFF);"> &#39;</span><span style="color: light-dark(#032F62, #9ECBFF);">&#39;</span><span>)</span></span>
+<span class="giallo-l"><span>    expanded</span><span style="color: light-dark(#D73A49, #F97583);"> =</span><span> re</span><span>.</span><span>sub</span><span>(</span><span>pat</span><span>,</span><span> varexpand</span><span>,</span><span> content</span><span>)</span></span>
+<span class="giallo-l"><span>    splitvals</span><span style="color: light-dark(#D73A49, #F97583);"> =</span><span> [</span><span>x</span><span>.</span><span>split</span><span>(</span><span style="color: light-dark(#032F62, #9ECBFF);">&quot;</span><span style="color: light-dark(#032F62, #9ECBFF);">=</span><span style="color: light-dark(#032F62, #9ECBFF);">&quot;</span><span>)</span><span style="color: light-dark(#D73A49, #F97583);"> for</span><span> x</span><span style="color: light-dark(#D73A49, #F97583);"> in</span><span> expanded</span><span>.</span><span>splitlines</span><span>(</span><span>)</span><span>]</span></span>
+<span class="giallo-l"><span style="color: light-dark(#D73A49, #F97583);">    return</span><span> {</span><span>k</span><span>:</span><span> v</span><span style="color: light-dark(#D73A49, #F97583);"> for</span><span> k</span><span>,</span><span> v</span><span style="color: light-dark(#D73A49, #F97583);"> in</span><span> splitvals</span><span>}</span></span></code></pre>
+<p>We can see this in action with the <code>.env</code> file with one level of variables mentioned
+above and running <code>main.py</code> outputs</p>
+<pre class="giallo" style="color-scheme: light dark; color: light-dark(#24292E, #E1E4E8); background-color: light-dark(#FFFFFF, #24292E);"><code data-lang="python"><span class="giallo-l"><span>{</span><span style="color: light-dark(#032F62, #9ECBFF);">&#39;</span><span style="color: light-dark(#032F62, #9ECBFF);">DOMAIN</span><span style="color: light-dark(#032F62, #9ECBFF);">&#39;</span><span>:</span><span style="color: light-dark(#032F62, #9ECBFF);"> &#39;</span><span style="color: light-dark(#032F62, #9ECBFF);">example.org</span><span style="color: light-dark(#032F62, #9ECBFF);">&#39;</span><span>,</span><span style="color: light-dark(#032F62, #9ECBFF);"> &#39;</span><span style="color: light-dark(#032F62, #9ECBFF);">ADMIN_EMAIL</span><span style="color: light-dark(#032F62, #9ECBFF);">&#39;</span><span>:</span><span style="color: light-dark(#032F62, #9ECBFF);"> &#39;</span><span style="color: light-dark(#032F62, #9ECBFF);">admin@example.org</span><span style="color: light-dark(#032F62, #9ECBFF);">&#39;</span><span>,</span><span style="color: light-dark(#032F62, #9ECBFF);"> &#39;</span><span style="color: light-dark(#032F62, #9ECBFF);">ROOT_URL</span><span style="color: light-dark(#032F62, #9ECBFF);">&#39;</span><span>:</span><span style="color: light-dark(#032F62, #9ECBFF);"> &#39;</span><span style="color: light-dark(#032F62, #9ECBFF);">example.org/app</span><span style="color: light-dark(#032F62, #9ECBFF);">&#39;</span><span>}</span></span></code></pre>
+<p>Voilà, a nice 80/20 solution to read <code>.env</code> files for your applications. You can
+stop here if that's all you needed but now I'll show you how to put your
+configuration into an immutable Python object.</p>
+<h2 id="storing-the-env-content-in-an-immutable-object">Storing the <code>.env</code> content in an immutable object</h2>
+<p>Instead of returning a dictionary, I'd like to build a <code>dataclass</code> that can be
+build from a <code>.env</code> file. By marking it as <code>frozen</code>, it will be "immutable".
+Which means that it will raise an error when trying to set attributes though
+there are some ways around that. Still in <code>conf.py</code>, it is defined like so:</p>
+<pre class="giallo" style="color-scheme: light dark; color: light-dark(#24292E, #E1E4E8); background-color: light-dark(#FFFFFF, #24292E);"><code data-lang="python"><span class="giallo-l"><span style="color: light-dark(#D73A49, #F97583);">from</span><span> dataclasses</span><span style="color: light-dark(#D73A49, #F97583);"> import</span><span> dataclass</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span style="color: light-dark(#6F42C1, #B392F0);">@</span><span style="color: light-dark(#6F42C1, #B392F0);">dataclass</span><span>(</span><span style="color: light-dark(#E36209, #FFAB70);">frozen</span><span style="color: light-dark(#D73A49, #F97583);">=</span><span style="color: light-dark(#005CC5, #79B8FF);">True</span><span>,</span><span style="color: light-dark(#E36209, #FFAB70);"> kw_only</span><span style="color: light-dark(#D73A49, #F97583);">=</span><span style="color: light-dark(#005CC5, #79B8FF);">True</span><span>)</span></span>
+<span class="giallo-l"><span style="color: light-dark(#D73A49, #F97583);">class</span><span style="color: light-dark(#6F42C1, #B392F0);"> EnvConfig</span><span>:</span></span>
+<span class="giallo-l"><span>    app_env</span><span>:</span><span style="color: light-dark(#005CC5, #79B8FF);"> str</span></span>
+<span class="giallo-l"><span>    db_name</span><span>:</span><span style="color: light-dark(#005CC5, #79B8FF);"> str</span></span>
+<span class="giallo-l"><span>    db_user</span><span>:</span><span style="color: light-dark(#005CC5, #79B8FF);"> str</span></span>
+<span class="giallo-l"><span>    db_password</span><span>:</span><span style="color: light-dark(#005CC5, #79B8FF);"> str</span></span>
+<span class="giallo-l"><span>    db_port</span><span>:</span><span style="color: light-dark(#005CC5, #79B8FF);"> int</span></span></code></pre>
+<p>Then, I would like to build it from an environment file, while ignoring extra
+keys as well as ensuring the types of the attributes are correct. When you
+define a <code>dataclass</code>, this attributes and types are neatly accessible in the
+<code>__annotations__</code> attribute.</p>
+<pre class="giallo" style="color-scheme: light dark; color: light-dark(#24292E, #E1E4E8); background-color: light-dark(#FFFFFF, #24292E);"><code data-lang="python"><span class="giallo-l"><span style="color: light-dark(#D73A49, #F97583);">&gt;&gt;</span><span style="color: light-dark(#D73A49, #F97583);">&gt;</span><span> EnvConfig</span><span>.</span><span style="color: light-dark(#005CC5, #79B8FF);">__annotations__</span></span>
+<span class="giallo-l"><span>{</span><span style="color: light-dark(#032F62, #9ECBFF);">&#39;</span><span style="color: light-dark(#032F62, #9ECBFF);">app_env</span><span style="color: light-dark(#032F62, #9ECBFF);">&#39;</span><span>:</span><span style="color: light-dark(#D73A49, #F97583);"> &lt;</span><span style="color: light-dark(#D73A49, #F97583);">class</span><span style="color: light-dark(#032F62, #9ECBFF);"> &#39;</span><span style="color: light-dark(#032F62, #9ECBFF);">str</span><span style="color: light-dark(#032F62, #9ECBFF);">&#39;</span><span style="color: light-dark(#D73A49, #F97583);">&gt;</span><span>,</span><span style="color: light-dark(#032F62, #9ECBFF);"> &#39;</span><span style="color: light-dark(#032F62, #9ECBFF);">db_name</span><span style="color: light-dark(#032F62, #9ECBFF);">&#39;</span><span>:</span><span style="color: light-dark(#D73A49, #F97583);"> &lt;</span><span style="color: light-dark(#D73A49, #F97583);">class</span><span style="color: light-dark(#032F62, #9ECBFF);"> &#39;</span><span style="color: light-dark(#032F62, #9ECBFF);">str</span><span style="color: light-dark(#032F62, #9ECBFF);">&#39;</span><span style="color: light-dark(#D73A49, #F97583);">&gt;</span><span>,</span><span style="color: light-dark(#032F62, #9ECBFF);"> &#39;</span><span style="color: light-dark(#032F62, #9ECBFF);">db_user</span><span style="color: light-dark(#032F62, #9ECBFF);">&#39;</span><span>:</span><span style="color: light-dark(#D73A49, #F97583);"> &lt;</span><span style="color: light-dark(#D73A49, #F97583);">class</span><span style="color: light-dark(#032F62, #9ECBFF);"> &#39;</span><span style="color: light-dark(#032F62, #9ECBFF);">str</span><span style="color: light-dark(#032F62, #9ECBFF);">&#39;</span><span style="color: light-dark(#D73A49, #F97583);">&gt;</span><span>,</span><span style="color: light-dark(#032F62, #9ECBFF);"> &#39;</span><span style="color: light-dark(#032F62, #9ECBFF);">db_password</span><span style="color: light-dark(#032F62, #9ECBFF);">&#39;</span><span>:</span><span style="color: light-dark(#D73A49, #F97583);"> &lt;</span><span style="color: light-dark(#D73A49, #F97583);">class</span><span style="color: light-dark(#032F62, #9ECBFF);"> &#39;</span><span style="color: light-dark(#032F62, #9ECBFF);">str</span><span style="color: light-dark(#032F62, #9ECBFF);">&#39;</span><span style="color: light-dark(#D73A49, #F97583);">&gt;</span><span>,</span><span style="color: light-dark(#032F62, #9ECBFF);"> &#39;</span><span style="color: light-dark(#032F62, #9ECBFF);">db_port</span><span style="color: light-dark(#032F62, #9ECBFF);">&#39;</span><span>:</span><span style="color: light-dark(#D73A49, #F97583);"> &lt;</span><span style="color: light-dark(#D73A49, #F97583);">class</span><span style="color: light-dark(#032F62, #9ECBFF);"> &#39;</span><span style="color: light-dark(#032F62, #9ECBFF);">int</span><span style="color: light-dark(#032F62, #9ECBFF);">&#39;</span><span style="color: light-dark(#D73A49, #F97583);">&gt;</span><span>}</span></span></code></pre>
+<p>Note that the values of the dictionaries are <strong>callable</strong>, we'll be able to call
+those classes on the values of the dictionary obtained from the environment.
+Let's also create a <code>classmethod</code> that will take a path to the relevant file.
+Now, <code>conf.py</code> looks like</p>
+<pre class="giallo" style="color-scheme: light dark; color: light-dark(#24292E, #E1E4E8); background-color: light-dark(#FFFFFF, #24292E);"><code data-lang="python"><span class="giallo-l"><span style="color: light-dark(#D73A49, #F97583);">import</span><span> os</span></span>
+<span class="giallo-l"><span style="color: light-dark(#D73A49, #F97583);">import</span><span> typing</span><span style="color: light-dark(#D73A49, #F97583);"> as</span><span> t</span></span>
+<span class="giallo-l"><span style="color: light-dark(#D73A49, #F97583);">from</span><span> dataclasses</span><span style="color: light-dark(#D73A49, #F97583);"> import</span><span> dataclass</span></span>
+<span class="giallo-l"><span style="color: light-dark(#D73A49, #F97583);">from</span><span> pathlib</span><span style="color: light-dark(#D73A49, #F97583);"> import</span><span> Path</span></span>
+<span class="giallo-l"><span style="color: light-dark(#D73A49, #F97583);">import</span><span> re</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span style="color: light-dark(#005CC5, #79B8FF);">ROOT_DIR</span><span style="color: light-dark(#D73A49, #F97583);"> =</span><span> Path</span><span>(</span><span style="color: light-dark(#005CC5, #79B8FF);">__file__</span><span>)</span><span>.</span><span>parents</span><span>[</span><span style="color: light-dark(#005CC5, #79B8FF);">1</span><span>]</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span style="color: light-dark(#D73A49, #F97583);">def</span><span style="color: light-dark(#6F42C1, #B392F0);"> get_dotenv</span><span>(</span><span>fp</span><span>:</span><span> Path</span><span>)</span><span> -&gt;</span><span> dict</span><span>[</span><span style="color: light-dark(#005CC5, #79B8FF);">str</span><span>,</span><span style="color: light-dark(#005CC5, #79B8FF);"> str</span><span>]</span><span>:</span></span>
+<span class="giallo-l"><span>    content</span><span style="color: light-dark(#D73A49, #F97583);"> =</span><span> fp</span><span>.</span><span>read_text</span><span>(</span><span>)</span></span>
+<span class="giallo-l"><span>    pat</span><span style="color: light-dark(#D73A49, #F97583);"> =</span><span> re</span><span>.</span><span>compile</span><span>(</span><span style="color: light-dark(#D73A49, #F97583);">r</span><span style="color: light-dark(#032F62, #9ECBFF);">&quot;</span><span style="color: light-dark(#22863A, #85E89D);font-weight: bold;">\$</span><span style="color: light-dark(#22863A, #85E89D);font-weight: bold;">\{</span><span style="color: light-dark(#005CC5, #79B8FF);">\b</span><span style="color: light-dark(#005CC5, #79B8FF);">.</span><span style="color: light-dark(#D73A49, #F97583);">+</span><span style="color: light-dark(#005CC5, #79B8FF);">\b</span><span style="color: light-dark(#22863A, #85E89D);font-weight: bold;">\}</span><span style="color: light-dark(#032F62, #9ECBFF);">&quot;</span><span>)</span></span>
+<span class="giallo-l"><span>    splitvals</span><span style="color: light-dark(#D73A49, #F97583);"> =</span><span> [</span><span>x</span><span>.</span><span>split</span><span>(</span><span style="color: light-dark(#032F62, #9ECBFF);">&quot;</span><span style="color: light-dark(#032F62, #9ECBFF);">=</span><span style="color: light-dark(#032F62, #9ECBFF);">&quot;</span><span>)</span><span style="color: light-dark(#D73A49, #F97583);"> for</span><span> x</span><span style="color: light-dark(#D73A49, #F97583);"> in</span><span> content</span><span>.</span><span>splitlines</span><span>(</span><span>)</span><span>]</span></span>
+<span class="giallo-l"><span>    raw</span><span style="color: light-dark(#D73A49, #F97583);"> =</span><span> {</span><span>k</span><span>.</span><span>strip</span><span>(</span><span>)</span><span>:</span><span> v</span><span>.</span><span>strip</span><span>(</span><span>)</span><span style="color: light-dark(#D73A49, #F97583);"> for</span><span> k</span><span>,</span><span> v</span><span style="color: light-dark(#D73A49, #F97583);"> in</span><span> splitvals</span><span>}</span></span>
+<span class="giallo-l"><span style="color: light-dark(#D73A49, #F97583);">    def</span><span style="color: light-dark(#6F42C1, #B392F0);"> varexpand</span><span>(</span><span>matchobj</span><span>:</span><span> re</span><span>.</span><span>Match</span><span>[</span><span style="color: light-dark(#005CC5, #79B8FF);">str</span><span>]</span><span>)</span><span> -&gt;</span><span style="color: light-dark(#005CC5, #79B8FF);"> str</span><span>:</span></span>
+<span class="giallo-l"><span>        strmatch</span><span style="color: light-dark(#D73A49, #F97583);"> =</span><span> matchobj</span><span>.</span><span>group</span><span>(</span><span style="color: light-dark(#005CC5, #79B8FF);">0</span><span>)</span><span>.</span><span>lstrip</span><span>(</span><span style="color: light-dark(#032F62, #9ECBFF);">&quot;</span><span style="color: light-dark(#032F62, #9ECBFF);">${</span><span style="color: light-dark(#032F62, #9ECBFF);">&quot;</span><span>)</span><span>.</span><span>rstrip</span><span>(</span><span style="color: light-dark(#032F62, #9ECBFF);">&quot;</span><span style="color: light-dark(#032F62, #9ECBFF);">}</span><span style="color: light-dark(#032F62, #9ECBFF);">&quot;</span><span>)</span></span>
+<span class="giallo-l"><span style="color: light-dark(#D73A49, #F97583);">        return</span><span> raw</span><span>.</span><span>get</span><span>(</span><span>strmatch</span><span>,</span><span style="color: light-dark(#032F62, #9ECBFF);"> &#39;</span><span style="color: light-dark(#032F62, #9ECBFF);">&#39;</span><span>)</span></span>
+<span class="giallo-l"><span>    expanded</span><span style="color: light-dark(#D73A49, #F97583);"> =</span><span> re</span><span>.</span><span>sub</span><span>(</span><span>pat</span><span>,</span><span> varexpand</span><span>,</span><span> content</span><span>)</span></span>
+<span class="giallo-l"><span>    splitvals</span><span style="color: light-dark(#D73A49, #F97583);"> =</span><span> [</span><span>x</span><span>.</span><span>split</span><span>(</span><span style="color: light-dark(#032F62, #9ECBFF);">&quot;</span><span style="color: light-dark(#032F62, #9ECBFF);">=</span><span style="color: light-dark(#032F62, #9ECBFF);">&quot;</span><span>)</span><span style="color: light-dark(#D73A49, #F97583);"> for</span><span> x</span><span style="color: light-dark(#D73A49, #F97583);"> in</span><span> expanded</span><span>.</span><span>splitlines</span><span>(</span><span>)</span><span>]</span></span>
+<span class="giallo-l"><span style="color: light-dark(#D73A49, #F97583);">    return</span><span> {</span><span>k</span><span>:</span><span> v</span><span style="color: light-dark(#D73A49, #F97583);"> for</span><span> k</span><span>,</span><span> v</span><span style="color: light-dark(#D73A49, #F97583);"> in</span><span> splitvals</span><span>}</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span style="color: light-dark(#6F42C1, #B392F0);">@</span><span style="color: light-dark(#6F42C1, #B392F0);">dataclass</span><span>(</span><span style="color: light-dark(#E36209, #FFAB70);">frozen</span><span style="color: light-dark(#D73A49, #F97583);">=</span><span style="color: light-dark(#005CC5, #79B8FF);">True</span><span>,</span><span style="color: light-dark(#E36209, #FFAB70);"> kw_only</span><span style="color: light-dark(#D73A49, #F97583);">=</span><span style="color: light-dark(#005CC5, #79B8FF);">True</span><span>)</span></span>
+<span class="giallo-l"><span style="color: light-dark(#D73A49, #F97583);">class</span><span style="color: light-dark(#6F42C1, #B392F0);"> EnvConfig</span><span>:</span></span>
+<span class="giallo-l"><span>    app_env</span><span>:</span><span style="color: light-dark(#005CC5, #79B8FF);"> str</span></span>
+<span class="giallo-l"><span>    db_name</span><span>:</span><span style="color: light-dark(#005CC5, #79B8FF);"> str</span></span>
+<span class="giallo-l"><span>    db_user</span><span>:</span><span style="color: light-dark(#005CC5, #79B8FF);"> str</span></span>
+<span class="giallo-l"><span>    db_password</span><span>:</span><span style="color: light-dark(#005CC5, #79B8FF);"> str</span></span>
+<span class="giallo-l"><span>    db_port</span><span>:</span><span style="color: light-dark(#005CC5, #79B8FF);"> int</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span style="color: light-dark(#6F42C1, #B392F0);">    @</span><span style="color: light-dark(#005CC5, #79B8FF);">classmethod</span></span>
+<span class="giallo-l"><span style="color: light-dark(#D73A49, #F97583);">    def</span><span style="color: light-dark(#6F42C1, #B392F0);"> from_dotenv</span><span>(</span><span>cls</span><span>:</span><span> type</span><span>[</span><span>t</span><span>.</span><span>Self</span><span>]</span><span>,</span><span> fp</span><span>:</span><span> Path</span><span style="color: light-dark(#D73A49, #F97583);"> =</span><span style="color: light-dark(#005CC5, #79B8FF);"> ROOT_DIR</span><span style="color: light-dark(#D73A49, #F97583);"> /</span><span style="color: light-dark(#032F62, #9ECBFF);"> &quot;</span><span style="color: light-dark(#032F62, #9ECBFF);">.env</span><span style="color: light-dark(#032F62, #9ECBFF);">&quot;</span><span>)</span><span> -&gt;</span><span> t</span><span>.</span><span>Self</span><span>:</span></span>
+<span class="giallo-l"><span>        data</span><span style="color: light-dark(#D73A49, #F97583);"> =</span><span> {</span><span>}</span></span>
+<span class="giallo-l"><span>        annotations</span><span style="color: light-dark(#D73A49, #F97583);"> =</span><span style="color: light-dark(#005CC5, #79B8FF);"> cls</span><span>.</span><span style="color: light-dark(#005CC5, #79B8FF);">__annotations__</span></span>
+<span class="giallo-l"><span>        dotenv</span><span style="color: light-dark(#D73A49, #F97583);"> =</span><span> get_dotenv</span><span>(</span><span>fp</span><span>)</span></span>
+<span class="giallo-l"><span style="color: light-dark(#D73A49, #F97583);">        for</span><span> k</span><span style="color: light-dark(#D73A49, #F97583);"> in</span><span> annotations</span><span>.</span><span>keys</span><span>(</span><span>)</span><span style="color: light-dark(#D73A49, #F97583);"> &amp;</span><span style="color: light-dark(#005CC5, #79B8FF);"> map</span><span>(</span><span style="color: light-dark(#005CC5, #79B8FF);">str</span><span>.</span><span>lower</span><span>,</span><span> dotenv</span><span>.</span><span>keys</span><span>(</span><span>)</span><span>)</span><span>:</span></span>
+<span class="giallo-l"><span>            data</span><span>[</span><span>k</span><span>]</span><span style="color: light-dark(#D73A49, #F97583);"> =</span><span> annotations</span><span>[</span><span>k</span><span>]</span><span>(</span><span>dotenv</span><span>[</span><span>k</span><span>.</span><span>upper</span><span>(</span><span>)</span><span>]</span><span>)</span></span>
+<span class="giallo-l"><span style="color: light-dark(#D73A49, #F97583);">        return</span><span style="color: light-dark(#005CC5, #79B8FF);"> cls</span><span>(</span><span style="color: light-dark(#D73A49, #F97583);">**</span><span>data</span><span>)</span></span></code></pre>
+<p>I'm making some assumptions of course, such that the name of the attributes
+appear in uppercase in the <code>.env</code> file. Since dictionary keys behave like <code>set</code>
+objects, I can use the <code>&amp;</code> operator to only retrieve keys that appear in both
+the annotations and the <code>.env</code> file content. Meaning that creating the object
+will fail on missing keys, which is what I usually want. I can also use the
+callable values of the annotations to convert the environment file content to
+the right type and then return the newly created object.</p>
+<p>In <code>main.py</code>, with the first <code>.env</code> I presented, let's do</p>
+<pre class="giallo" style="color-scheme: light dark; color: light-dark(#24292E, #E1E4E8); background-color: light-dark(#FFFFFF, #24292E);"><code data-lang="python"><span class="giallo-l"><span style="color: light-dark(#D73A49, #F97583);">import</span><span> conf</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span style="color: light-dark(#005CC5, #79B8FF);">print</span><span>(</span><span>conf</span><span>.</span><span>EnvConfig</span><span>.</span><span>from_dotenv</span><span>(</span><span>conf</span><span>.</span><span style="color: light-dark(#005CC5, #79B8FF);">ROOT_DIR</span><span style="color: light-dark(#D73A49, #F97583);"> /</span><span style="color: light-dark(#032F62, #9ECBFF);"> &quot;</span><span style="color: light-dark(#032F62, #9ECBFF);">.env</span><span style="color: light-dark(#032F62, #9ECBFF);">&quot;</span><span>)</span><span>)</span></span></code></pre>
+<p>which outputs,</p>
+<pre class="giallo" style="color-scheme: light dark; color: light-dark(#24292E, #E1E4E8); background-color: light-dark(#FFFFFF, #24292E);"><code data-lang="python"><span class="giallo-l"><span>EnvConfig</span><span>(</span><span style="color: light-dark(#E36209, #FFAB70);">app_env</span><span style="color: light-dark(#D73A49, #F97583);">=</span><span style="color: light-dark(#032F62, #9ECBFF);">&#39;</span><span style="color: light-dark(#032F62, #9ECBFF);">dev</span><span style="color: light-dark(#032F62, #9ECBFF);">&#39;</span><span>,</span><span style="color: light-dark(#E36209, #FFAB70);"> db_name</span><span style="color: light-dark(#D73A49, #F97583);">=</span><span style="color: light-dark(#032F62, #9ECBFF);">&#39;</span><span style="color: light-dark(#032F62, #9ECBFF);">my_db</span><span style="color: light-dark(#032F62, #9ECBFF);">&#39;</span><span>,</span><span style="color: light-dark(#E36209, #FFAB70);"> db_user</span><span style="color: light-dark(#D73A49, #F97583);">=</span><span style="color: light-dark(#032F62, #9ECBFF);">&#39;</span><span style="color: light-dark(#032F62, #9ECBFF);">root</span><span style="color: light-dark(#032F62, #9ECBFF);">&#39;</span><span>,</span><span style="color: light-dark(#E36209, #FFAB70);"> db_password</span><span style="color: light-dark(#D73A49, #F97583);">=</span><span style="color: light-dark(#032F62, #9ECBFF);">&#39;</span><span style="color: light-dark(#032F62, #9ECBFF);">passw</span><span style="color: light-dark(#032F62, #9ECBFF);">&#39;</span><span>,</span><span style="color: light-dark(#E36209, #FFAB70);"> db_port</span><span style="color: light-dark(#D73A49, #F97583);">=</span><span style="color: light-dark(#005CC5, #79B8FF);">1111</span><span>)</span></span></code></pre>
+<p>Again, there are some trade-offs here but I think it provides a lot of value for
+a small amount of code.</p>
+<h2 id="using-load-dotenv-anyways">Using <code>load_dotenv</code> anyways</h2>
+<p>I can appreciate that not everyone thinks like me and that you'd want to have
+something similar to the <code>load_dotenv</code> function of the <code>python-dotenv</code> library,
+to load the content of environment files into the global environment.</p>
+<p>Here it goes,</p>
+<pre class="giallo" style="color-scheme: light dark; color: light-dark(#24292E, #E1E4E8); background-color: light-dark(#FFFFFF, #24292E);"><code data-lang="python"><span class="giallo-l"><span style="color: light-dark(#D73A49, #F97583);">import</span><span> os</span></span>
+<span class="giallo-l"><span style="color: light-dark(#D73A49, #F97583);">import</span><span> typing</span><span style="color: light-dark(#D73A49, #F97583);"> as</span><span> t</span></span>
+<span class="giallo-l"><span style="color: light-dark(#D73A49, #F97583);">from</span><span> dataclasses</span><span style="color: light-dark(#D73A49, #F97583);"> import</span><span> asdict</span><span>,</span><span> dataclass</span></span>
+<span class="giallo-l"><span style="color: light-dark(#D73A49, #F97583);">from</span><span> pathlib</span><span style="color: light-dark(#D73A49, #F97583);"> import</span><span> Path</span></span>
+<span class="giallo-l"><span style="color: light-dark(#D73A49, #F97583);">import</span><span> re</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span style="color: light-dark(#005CC5, #79B8FF);">ROOT_DIR</span><span style="color: light-dark(#D73A49, #F97583);"> =</span><span> Path</span><span>(</span><span style="color: light-dark(#005CC5, #79B8FF);">__file__</span><span>)</span><span>.</span><span>parents</span><span>[</span><span style="color: light-dark(#005CC5, #79B8FF);">1</span><span>]</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span style="color: light-dark(#D73A49, #F97583);">def</span><span style="color: light-dark(#6F42C1, #B392F0);"> get_dotenv</span><span>(</span><span>fp</span><span>:</span><span> Path</span><span>)</span><span> -&gt;</span><span> dict</span><span>[</span><span style="color: light-dark(#005CC5, #79B8FF);">str</span><span>,</span><span style="color: light-dark(#005CC5, #79B8FF);"> str</span><span>]</span><span>:</span></span>
+<span class="giallo-l"><span>    content</span><span style="color: light-dark(#D73A49, #F97583);"> =</span><span> fp</span><span>.</span><span>read_text</span><span>(</span><span>)</span></span>
+<span class="giallo-l"><span>    pat</span><span style="color: light-dark(#D73A49, #F97583);"> =</span><span> re</span><span>.</span><span>compile</span><span>(</span><span style="color: light-dark(#D73A49, #F97583);">r</span><span style="color: light-dark(#032F62, #9ECBFF);">&quot;</span><span style="color: light-dark(#22863A, #85E89D);font-weight: bold;">\$</span><span style="color: light-dark(#22863A, #85E89D);font-weight: bold;">\{</span><span style="color: light-dark(#005CC5, #79B8FF);">\b</span><span style="color: light-dark(#005CC5, #79B8FF);">.</span><span style="color: light-dark(#D73A49, #F97583);">+</span><span style="color: light-dark(#005CC5, #79B8FF);">\b</span><span style="color: light-dark(#22863A, #85E89D);font-weight: bold;">\}</span><span style="color: light-dark(#032F62, #9ECBFF);">&quot;</span><span>)</span></span>
+<span class="giallo-l"><span>    splitvals</span><span style="color: light-dark(#D73A49, #F97583);"> =</span><span> [</span><span>x</span><span>.</span><span>split</span><span>(</span><span style="color: light-dark(#032F62, #9ECBFF);">&quot;</span><span style="color: light-dark(#032F62, #9ECBFF);">=</span><span style="color: light-dark(#032F62, #9ECBFF);">&quot;</span><span>)</span><span style="color: light-dark(#D73A49, #F97583);"> for</span><span> x</span><span style="color: light-dark(#D73A49, #F97583);"> in</span><span> content</span><span>.</span><span>splitlines</span><span>(</span><span>)</span><span>]</span></span>
+<span class="giallo-l"><span>    raw</span><span style="color: light-dark(#D73A49, #F97583);"> =</span><span> {</span><span>k</span><span>.</span><span>strip</span><span>(</span><span>)</span><span>:</span><span> v</span><span>.</span><span>strip</span><span>(</span><span>)</span><span style="color: light-dark(#D73A49, #F97583);"> for</span><span> k</span><span>,</span><span> v</span><span style="color: light-dark(#D73A49, #F97583);"> in</span><span> splitvals</span><span>}</span></span>
+<span class="giallo-l"><span style="color: light-dark(#D73A49, #F97583);">    def</span><span style="color: light-dark(#6F42C1, #B392F0);"> varexpand</span><span>(</span><span>matchobj</span><span>:</span><span> re</span><span>.</span><span>Match</span><span>[</span><span style="color: light-dark(#005CC5, #79B8FF);">str</span><span>]</span><span>)</span><span> -&gt;</span><span style="color: light-dark(#005CC5, #79B8FF);"> str</span><span>:</span></span>
+<span class="giallo-l"><span>        strmatch</span><span style="color: light-dark(#D73A49, #F97583);"> =</span><span> matchobj</span><span>.</span><span>group</span><span>(</span><span style="color: light-dark(#005CC5, #79B8FF);">0</span><span>)</span><span>.</span><span>lstrip</span><span>(</span><span style="color: light-dark(#032F62, #9ECBFF);">&quot;</span><span style="color: light-dark(#032F62, #9ECBFF);">${</span><span style="color: light-dark(#032F62, #9ECBFF);">&quot;</span><span>)</span><span>.</span><span>rstrip</span><span>(</span><span style="color: light-dark(#032F62, #9ECBFF);">&quot;</span><span style="color: light-dark(#032F62, #9ECBFF);">}</span><span style="color: light-dark(#032F62, #9ECBFF);">&quot;</span><span>)</span></span>
+<span class="giallo-l"><span style="color: light-dark(#D73A49, #F97583);">        return</span><span> raw</span><span>.</span><span>get</span><span>(</span><span>strmatch</span><span>,</span><span style="color: light-dark(#032F62, #9ECBFF);"> &#39;</span><span style="color: light-dark(#032F62, #9ECBFF);">&#39;</span><span>)</span></span>
+<span class="giallo-l"><span>    expanded</span><span style="color: light-dark(#D73A49, #F97583);"> =</span><span> re</span><span>.</span><span>sub</span><span>(</span><span>pat</span><span>,</span><span> varexpand</span><span>,</span><span> content</span><span>)</span></span>
+<span class="giallo-l"><span>    splitvals</span><span style="color: light-dark(#D73A49, #F97583);"> =</span><span> [</span><span>x</span><span>.</span><span>split</span><span>(</span><span style="color: light-dark(#032F62, #9ECBFF);">&quot;</span><span style="color: light-dark(#032F62, #9ECBFF);">=</span><span style="color: light-dark(#032F62, #9ECBFF);">&quot;</span><span>)</span><span style="color: light-dark(#D73A49, #F97583);"> for</span><span> x</span><span style="color: light-dark(#D73A49, #F97583);"> in</span><span> expanded</span><span>.</span><span>splitlines</span><span>(</span><span>)</span><span>]</span></span>
+<span class="giallo-l"><span style="color: light-dark(#D73A49, #F97583);">    return</span><span> {</span><span>k</span><span>:</span><span> v</span><span style="color: light-dark(#D73A49, #F97583);"> for</span><span> k</span><span>,</span><span> v</span><span style="color: light-dark(#D73A49, #F97583);"> in</span><span> splitvals</span><span>}</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span style="color: light-dark(#6F42C1, #B392F0);">@</span><span style="color: light-dark(#6F42C1, #B392F0);">dataclass</span><span>(</span><span style="color: light-dark(#E36209, #FFAB70);">frozen</span><span style="color: light-dark(#D73A49, #F97583);">=</span><span style="color: light-dark(#005CC5, #79B8FF);">True</span><span>,</span><span style="color: light-dark(#E36209, #FFAB70);"> kw_only</span><span style="color: light-dark(#D73A49, #F97583);">=</span><span style="color: light-dark(#005CC5, #79B8FF);">True</span><span>)</span></span>
+<span class="giallo-l"><span style="color: light-dark(#D73A49, #F97583);">class</span><span style="color: light-dark(#6F42C1, #B392F0);"> EnvConfig</span><span>:</span></span>
+<span class="giallo-l"><span>    app_env</span><span>:</span><span style="color: light-dark(#005CC5, #79B8FF);"> str</span></span>
+<span class="giallo-l"><span>    db_name</span><span>:</span><span style="color: light-dark(#005CC5, #79B8FF);"> str</span></span>
+<span class="giallo-l"><span>    db_user</span><span>:</span><span style="color: light-dark(#005CC5, #79B8FF);"> str</span></span>
+<span class="giallo-l"><span>    db_password</span><span>:</span><span style="color: light-dark(#005CC5, #79B8FF);"> str</span></span>
+<span class="giallo-l"><span>    db_port</span><span>:</span><span style="color: light-dark(#005CC5, #79B8FF);"> int</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span style="color: light-dark(#6F42C1, #B392F0);">    @</span><span style="color: light-dark(#005CC5, #79B8FF);">classmethod</span></span>
+<span class="giallo-l"><span style="color: light-dark(#D73A49, #F97583);">    def</span><span style="color: light-dark(#6F42C1, #B392F0);"> from_dotenv</span><span>(</span><span>cls</span><span>:</span><span> type</span><span>[</span><span>t</span><span>.</span><span>Self</span><span>]</span><span>,</span><span> fp</span><span>:</span><span> Path</span><span style="color: light-dark(#D73A49, #F97583);"> =</span><span style="color: light-dark(#005CC5, #79B8FF);"> ROOT_DIR</span><span style="color: light-dark(#D73A49, #F97583);"> /</span><span style="color: light-dark(#032F62, #9ECBFF);"> &quot;</span><span style="color: light-dark(#032F62, #9ECBFF);">.env</span><span style="color: light-dark(#032F62, #9ECBFF);">&quot;</span><span>)</span><span> -&gt;</span><span> t</span><span>.</span><span>Self</span><span>:</span></span>
+<span class="giallo-l"><span>        data</span><span style="color: light-dark(#D73A49, #F97583);"> =</span><span> {</span><span>}</span></span>
+<span class="giallo-l"><span>        annotations</span><span style="color: light-dark(#D73A49, #F97583);"> =</span><span style="color: light-dark(#005CC5, #79B8FF);"> cls</span><span>.</span><span style="color: light-dark(#005CC5, #79B8FF);">__annotations__</span></span>
+<span class="giallo-l"><span>        dotenv</span><span style="color: light-dark(#D73A49, #F97583);"> =</span><span> get_dotenv</span><span>(</span><span>fp</span><span>)</span></span>
+<span class="giallo-l"><span style="color: light-dark(#D73A49, #F97583);">        for</span><span> k</span><span style="color: light-dark(#D73A49, #F97583);"> in</span><span> annotations</span><span>.</span><span>keys</span><span>(</span><span>)</span><span style="color: light-dark(#D73A49, #F97583);"> &amp;</span><span style="color: light-dark(#005CC5, #79B8FF);"> map</span><span>(</span><span style="color: light-dark(#005CC5, #79B8FF);">str</span><span>.</span><span>lower</span><span>,</span><span> dotenv</span><span>.</span><span>keys</span><span>(</span><span>)</span><span>)</span><span>:</span></span>
+<span class="giallo-l"><span>            data</span><span>[</span><span>k</span><span>]</span><span style="color: light-dark(#D73A49, #F97583);"> =</span><span> annotations</span><span>[</span><span>k</span><span>]</span><span>(</span><span>dotenv</span><span>[</span><span>k</span><span>.</span><span>upper</span><span>(</span><span>)</span><span>]</span><span>)</span></span>
+<span class="giallo-l"><span style="color: light-dark(#D73A49, #F97583);">        return</span><span style="color: light-dark(#005CC5, #79B8FF);"> cls</span><span>(</span><span style="color: light-dark(#D73A49, #F97583);">**</span><span>data</span><span>)</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span style="color: light-dark(#D73A49, #F97583);">    def</span><span style="color: light-dark(#6F42C1, #B392F0);"> as_str_dict</span><span>(</span><span>self</span><span>)</span><span> -&gt;</span><span> dict</span><span>[</span><span style="color: light-dark(#005CC5, #79B8FF);">str</span><span>,</span><span style="color: light-dark(#005CC5, #79B8FF);"> str</span><span>]</span><span>:</span></span>
+<span class="giallo-l"><span style="color: light-dark(#D73A49, #F97583);">        return</span><span> {</span><span>k</span><span>:</span><span style="color: light-dark(#005CC5, #79B8FF);"> str</span><span>(</span><span>v</span><span>)</span><span style="color: light-dark(#D73A49, #F97583);"> for</span><span> k</span><span>,</span><span> v</span><span style="color: light-dark(#D73A49, #F97583);"> in</span><span> asdict</span><span>(</span><span style="color: light-dark(#005CC5, #79B8FF);">self</span><span>)</span><span>.</span><span>items</span><span>(</span><span>)</span><span>}</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span style="color: light-dark(#D73A49, #F97583);">def</span><span style="color: light-dark(#6F42C1, #B392F0);"> load_dotenv</span><span>(</span><span>fp</span><span>:</span><span> Path</span><span>)</span><span> -&gt;</span><span style="color: light-dark(#005CC5, #79B8FF);"> None</span><span>:</span></span>
+<span class="giallo-l"><span>    dotenv</span><span style="color: light-dark(#D73A49, #F97583);"> =</span><span> get_dotenv</span><span>(</span><span>fp</span><span>)</span></span>
+<span class="giallo-l"><span>    os</span><span>.</span><span>environ</span><span>.</span><span>update</span><span>(</span><span>dotenv</span><span>)</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span style="color: light-dark(#D73A49, #F97583);">def</span><span style="color: light-dark(#6F42C1, #B392F0);"> load_dotenv_from_conf</span><span>(</span><span>conf</span><span>:</span><span> EnvConfig</span><span>)</span><span> -&gt;</span><span style="color: light-dark(#005CC5, #79B8FF);"> None</span><span>:</span></span>
+<span class="giallo-l"><span>    os</span><span>.</span><span>environ</span><span>.</span><span>update</span><span>(</span><span>conf</span><span>.</span><span>as_str_dict</span><span>(</span><span>)</span><span>)</span></span></code></pre>
+<p>I've added a <code>load_dotenv</code> function which is self-explanatory. I've also added a
+way to load the <code>EnvConfig</code> into the environment. We can use another nice bit of
+standard library with <code>dataclasses.asdict</code> and then ensure that all values are
+strings, a constraint of <code>os.environ</code>.</p>
+<h2 id="conclusion">Conclusion</h2>
+<p>I hope I've shown you a useful implementation! There are some nice quality of life
+features I could imagine like adding support for comments or finding <code>.env</code> files
+automatically but then I would most likely end up with something similar to
+<code>python-dotenv</code> =)</p>
+
+
+      </main>
+    <footer>
+      Nathan Furnal © 2026
+    </footer>
+  </body>
+</html>

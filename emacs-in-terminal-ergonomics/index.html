@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+      <!-- Title handling -->
+    <title>Emacs in the terminal: keybindings, client and more | Gribouillis</title>
+    <!-- Meta description -->
+    <meta name="description" content="Mindless sketches ✐ᝰ">
+    <link rel="stylesheet" href="https://blog.natfu.be/css/main.css">
+      <!-- RSS Feed -->
+      
+    <link rel="alternate" type="application/rss+xml" title="RSS" href="https://blog.natfu.be/rss.xml">
+      
+  </head>
+  <body>
+    <header>
+      <div class="nav-container">
+        <div class="nav-heading">
+          <div class="font-3rem">Gribouillis</div>
+          <p>Mindless sketches ✐ᝰ</p>
+        </div>
+        <div class="nav-content">
+          <nav>
+            <a href="https://blog.natfu.be">Posts</a>
+            <a href="https://blog.natfu.be/about">About</a>
+          </nav>
+        </div>
+      </div>
+    </header>
+    <main role="main">
+      
+<h1 class="title">
+  Emacs in the terminal: keybindings, client and more
+</h1>
+    <div class="post-meta">
+      <time class="published" datetime="2025-10-19">
+        Published: October 19, 2025
+      </time>
+
+      
+    </div>
+<hr class="separator">
+<h1 id="emacs-in-the-terminal">Emacs in the terminal</h1>
+<p>If you've ever tried using Emacs with <code>emacs -nw</code> (no window) in your terminal,
+you might've faced a frustrating experience: because Emacs binds keys starting
+with <kbd>Ctrl</kbd> and terminal input is first handled by the terminal
+emulator; some keys might not work as expected. They might provoke an action in
+the terminal but not in Emacs or be changed on the way. If you're also not using
+a "typical" QWERTY layout or have the bad idea of having accents (thus non ASCII
+characters) in your language, the problem gets worse.</p>
+<p>A common issue is trying to use <kbd>Ctrl+Backspace</kbd> which should delete a
+word but instead inserts <kbd>Ctrl+h</kbd> instead when used in the terminal.
+There are also issues for more complex key/characters combinations.</p>
+<h2 id="fix">Fix</h2>
+<p>The fix consists of using the <a rel="noopener external" target="_blank" href="https://sw.kovidgoyal.net/kitty/keyboard-protocol/">Kitty Keyboard
+Protocol</a> in both Emacs and
+your terminal emulators.</p>
+<p>I've tried to set a couple variables and tried some terminal emulators; the best
+experience I've had is with the <a rel="noopener external" target="_blank" href="https://github.com/benotn/kkp"><code>kkp</code> package</a>
+and the <a rel="noopener external" target="_blank" href="https://ghostty.org/">ghostty terminal emulator</a>.</p>
+<p>With the following configuration, in your initialization file:</p>
+<pre class="giallo" style="color-scheme: light dark; color: light-dark(#24292E, #E1E4E8); background-color: light-dark(#FFFFFF, #24292E);"><code data-lang="emacs-lisp"><span class="giallo-l"><span>(</span><span style="color: light-dark(#005CC5, #79B8FF);">use-package</span><span> kkp</span></span>
+<span class="giallo-l"><span style="color: light-dark(#005CC5, #79B8FF);">  :</span><span style="color: light-dark(#005CC5, #79B8FF);">ensure</span><span style="color: light-dark(#005CC5, #79B8FF);"> t</span></span>
+<span class="giallo-l"><span style="color: light-dark(#005CC5, #79B8FF);">  :</span><span style="color: light-dark(#005CC5, #79B8FF);">config</span></span>
+<span class="giallo-l"><span style="color: light-dark(#6A737D, #6A737D);">  ;</span><span style="color: light-dark(#6A737D, #6A737D);">; (setq kkp-alt-modifier &#39;alt) ;; use this if you want to map the Alt keyboard modifier to Alt in Emacs (and not to Meta)</span></span>
+<span class="giallo-l"><span>  (</span><span>global-kkp-mode </span><span style="color: light-dark(#005CC5, #79B8FF);">+1</span><span>)</span><span>)</span></span></code></pre><h2 id="quality-of-life">Quality of life</h2>
+<p>When setting Emacs as your <code>$EDITOR</code> in the shell, I discovered that <code>export EDITOR="emacs -nw"</code> sometimes fail depending on your shell, because it expects
+an executable without any white-spaces. An alternative is to write a shell
+function and refer to that as the editor:</p>
+<pre class="giallo" style="color-scheme: light dark; color: light-dark(#24292E, #E1E4E8); background-color: light-dark(#FFFFFF, #24292E);"><code data-lang="shellscript"><span class="giallo-l"><span style="color: light-dark(#6A737D, #6A737D);">#!</span><span style="color: light-dark(#6A737D, #6A737D);">/bin/sh</span></span>
+<span class="giallo-l"><span style="color: light-dark(#005CC5, #79B8FF);">exec</span><span style="color: light-dark(#032F62, #9ECBFF);"> emacs</span><span style="color: light-dark(#005CC5, #79B8FF);"> -</span><span style="color: light-dark(#005CC5, #79B8FF);">nw</span><span style="color: light-dark(#032F62, #9ECBFF);"> &quot;</span><span style="color: light-dark(#005CC5, #79B8FF);">$</span><span style="color: light-dark(#005CC5, #79B8FF);">@</span><span style="color: light-dark(#032F62, #9ECBFF);">&quot;</span></span></code></pre>
+<p>I have it in <code>/home/natfu/.local/bin/emacseditor</code> and I've set my <code>$EDITOR</code> to this path.</p>
+<p>Note that this spins a new instance of Emacs every time with a slight delay in starting
+up even with a rather optimized <code>~/.emacs.d/init.el</code>. The alternative is to use the
+<a rel="noopener external" target="_blank" href="https://www.gnu.org/software/emacs/manual/html_node/emacs/Invoking-emacsclient.html"><code>emacsclient</code></a>.
+In my case, I'm using Linux with <code>systemd</code> so I can write a unit file that will start an
+Emacs daemon in the background and open a new frame instantly by calling it. On my
+system, I've found that file in those places:</p>
+<ul>
+<li><code>/usr/share/emacs/30.2/etc/emacs.service</code></li>
+<li><code>/usr/lib/systemd/user/emacs.service</code></li>
+</ul>
+<p>To make it clear that I'll use it for my user, I'll copy the file under
+<code>~/.config/systemd/user/emacsd.service</code>. You can tweak it to your liking, for
+example by adding an environment file only for that service (useful to set the
+path among other things).</p>
+<pre class="giallo" style="color-scheme: light dark; color: light-dark(#24292E, #E1E4E8); background-color: light-dark(#FFFFFF, #24292E);"><code data-lang="systemd"><span class="giallo-l"><span style="color: light-dark(#6F42C1, #B392F0);">[Unit]</span></span>
+<span class="giallo-l"><span style="color: light-dark(#22863A, #85E89D);">Description</span><span style="color: light-dark(#D73A49, #F97583);">=</span><span>Emacs text editor (GUI)</span></span>
+<span class="giallo-l"><span style="color: light-dark(#22863A, #85E89D);">Documentation</span><span style="color: light-dark(#D73A49, #F97583);">=</span><span>info:emacs man:emacs(1) https://gnu.org/software/emacs/</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span style="color: light-dark(#6F42C1, #B392F0);">[Service]</span></span>
+<span class="giallo-l"><span style="color: light-dark(#22863A, #85E89D);">Type</span><span style="color: light-dark(#D73A49, #F97583);">=</span><span style="color: light-dark(#005CC5, #79B8FF);">notify</span></span>
+<span class="giallo-l"><span style="color: light-dark(#22863A, #85E89D);">ExecStart</span><span style="color: light-dark(#D73A49, #F97583);">=</span><span>/usr/bin/emacs --fg-daemon</span></span>
+<span class="giallo-l"><span style="color: light-dark(#22863A, #85E89D);">ExecStop</span><span style="color: light-dark(#D73A49, #F97583);">=</span><span>/usr/bin/emacsclient --eval </span><span style="color: light-dark(#032F62, #9ECBFF);">&quot;</span><span style="color: light-dark(#032F62, #9ECBFF);">(kill-emacs)</span><span style="color: light-dark(#032F62, #9ECBFF);">&quot;</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span style="color: light-dark(#6A737D, #6A737D);"># Emacs will exit with status 15 after having received SIGTERM, which</span></span>
+<span class="giallo-l"><span style="color: light-dark(#6A737D, #6A737D);"># is the default &quot;KillSignal&quot; value systemd uses to stop services.</span></span>
+<span class="giallo-l"><span style="color: light-dark(#22863A, #85E89D);">SuccessExitStatus</span><span style="color: light-dark(#D73A49, #F97583);">=</span><span style="color: light-dark(#005CC5, #79B8FF);">15</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span style="color: light-dark(#6A737D, #6A737D);"># The location of the SSH auth socket varies by distribution, and some</span></span>
+<span class="giallo-l"><span style="color: light-dark(#6A737D, #6A737D);"># set it from PAM, so don&#39;t override by default.</span></span>
+<span class="giallo-l"><span style="color: light-dark(#6A737D, #6A737D);"># Environment=SSH_AUTH_SOCK=%t/keyring/ssh</span></span>
+<span class="giallo-l"><span style="color: light-dark(#22863A, #85E89D);">Restart</span><span style="color: light-dark(#D73A49, #F97583);">=</span><span style="color: light-dark(#005CC5, #79B8FF);">on-failure</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span style="color: light-dark(#6F42C1, #B392F0);">[Install]</span></span>
+<span class="giallo-l"><span style="color: light-dark(#22863A, #85E89D);">WantedBy</span><span style="color: light-dark(#D73A49, #F97583);">=</span><span>default.target</span></span></code></pre>
+<p>Then, I can change the <code>/home/natfu/.local/bin/emacseditor</code> file to use the client
+instead.</p>
+<pre class="giallo" style="color-scheme: light dark; color: light-dark(#24292E, #E1E4E8); background-color: light-dark(#FFFFFF, #24292E);"><code data-lang="shellscript"><span class="giallo-l"><span style="color: light-dark(#6A737D, #6A737D);">#!</span><span style="color: light-dark(#6A737D, #6A737D);">/bin/sh</span></span>
+<span class="giallo-l"><span style="color: light-dark(#005CC5, #79B8FF);">exec</span><span style="color: light-dark(#032F62, #9ECBFF);"> emacsclient</span><span style="color: light-dark(#005CC5, #79B8FF);"> -</span><span style="color: light-dark(#005CC5, #79B8FF);">t</span><span style="color: light-dark(#005CC5, #79B8FF);"> -</span><span style="color: light-dark(#005CC5, #79B8FF);">a=</span><span style="color: light-dark(#032F62, #9ECBFF);">&quot;</span><span style="color: light-dark(#032F62, #9ECBFF);">&quot;</span><span style="color: light-dark(#032F62, #9ECBFF);"> &quot;</span><span style="color: light-dark(#005CC5, #79B8FF);">$</span><span style="color: light-dark(#005CC5, #79B8FF);">@</span><span style="color: light-dark(#032F62, #9ECBFF);">&quot;</span></span></code></pre>
+<p>Finally, start the service with <code>systemctl --user start --now emacsd.service</code> and
+<code>systemctl --user enable --now emacsd.service</code> to have the service launch Emacs for you
+at the start of a user session.</p>
+<p>As always, the <a rel="noopener external" target="_blank" href="https://wiki.archlinux.org/title/Emacs">Arch wiki on Emacs</a> is great
+information, even if you're not using Arch.</p>
+<h3 id="important-note-for-linux">Important note for Linux</h3>
+<p>On most Linux systems, you'll be able to use <a rel="noopener external" target="_blank" href="https://wiki.archlinux.org/title/Desktop_entries"><code>.desktop</code>
+files</a> which not only do let
+you add icons and interact on a GUI level with an application (like icons in
+menus/desktops), it also lets you interact with the rest of the system, for
+example through shortcuts.</p>
+<p>From my understanding, it's up to the distribution and package management to
+create those files, here's what Arch is doing for Emacs. Where the entry called
+'Emacs (Client)' when clicked on, will try to create a frame by connecting to
+the client if it exists and create it otherwise. It lives in
+<code>/usr/local/share/applications/emacsclient.desktop</code>. If you want to create one
+that'll be picked up by system instead of that one, you should use
+<code>~/.local/share/applications/emacsclient.destkop</code>.</p>
+<pre class="giallo" style="color-scheme: light dark; color: light-dark(#24292E, #E1E4E8); background-color: light-dark(#FFFFFF, #24292E);"><code data-lang="systemd"><span class="giallo-l"><span>[Desktop Entry]</span></span>
+<span class="giallo-l"><span style="color: light-dark(#22863A, #85E89D);">Name</span><span style="color: light-dark(#D73A49, #F97583);">=</span><span>Emacs (Client)</span></span>
+<span class="giallo-l"><span style="color: light-dark(#22863A, #85E89D);">GenericName</span><span style="color: light-dark(#D73A49, #F97583);">=</span><span>Text Editor</span></span>
+<span class="giallo-l"><span style="color: light-dark(#22863A, #85E89D);">Comment</span><span style="color: light-dark(#D73A49, #F97583);">=</span><span>Edit text</span></span>
+<span class="giallo-l"><span style="color: light-dark(#22863A, #85E89D);">MimeType</span><span style="color: light-dark(#D73A49, #F97583);">=</span><span>text/english;text/plain;text/x-makefile;text/x-c++hdr;text/x-c++src;text/x-chdr;text/x-csrc;text/x-java;text/x-moc;text/x-pascal;text/x-tcl;text/x-tex;application/x-shellscript;text/x-c;text/x-c++;x-scheme-handler/org-protocol;</span></span>
+<span class="giallo-l"><span style="color: light-dark(#22863A, #85E89D);">Exec</span><span style="color: light-dark(#D73A49, #F97583);">=</span><span>sh -c </span><span style="color: light-dark(#032F62, #9ECBFF);">&quot;</span><span style="color: light-dark(#032F62, #9ECBFF);">if [ -n </span><span style="color: light-dark(#005CC5, #79B8FF);">\\</span><span style="color: light-dark(#032F62, #9ECBFF);">&quot;</span><span>\\$*\\&quot; ]; then exec /usr/local/bin/emacsclient --alternate-editor= --reuse-frame \\&quot;\\$@\\&quot;; else exec emacsclient --alternate-editor= --create-frame; fi&quot; sh %F</span></span>
+<span class="giallo-l"><span style="color: light-dark(#22863A, #85E89D);">Icon</span><span style="color: light-dark(#D73A49, #F97583);">=</span><span>emacs</span></span>
+<span class="giallo-l"><span style="color: light-dark(#22863A, #85E89D);">Type</span><span style="color: light-dark(#D73A49, #F97583);">=</span><span>Application</span></span>
+<span class="giallo-l"><span style="color: light-dark(#22863A, #85E89D);">Terminal</span><span style="color: light-dark(#D73A49, #F97583);">=</span><span style="color: light-dark(#005CC5, #79B8FF);">false</span></span>
+<span class="giallo-l"><span style="color: light-dark(#22863A, #85E89D);">Categories</span><span style="color: light-dark(#D73A49, #F97583);">=</span><span>Development;TextEditor;</span></span>
+<span class="giallo-l"><span style="color: light-dark(#22863A, #85E89D);">StartupNotify</span><span style="color: light-dark(#D73A49, #F97583);">=</span><span style="color: light-dark(#005CC5, #79B8FF);">true</span></span>
+<span class="giallo-l"><span style="color: light-dark(#22863A, #85E89D);">StartupWMClass</span><span style="color: light-dark(#D73A49, #F97583);">=</span><span>Emacs</span></span>
+<span class="giallo-l"><span style="color: light-dark(#22863A, #85E89D);">Keywords</span><span style="color: light-dark(#D73A49, #F97583);">=</span><span>emacsclient;</span></span>
+<span class="giallo-l"><span style="color: light-dark(#22863A, #85E89D);">Actions</span><span style="color: light-dark(#D73A49, #F97583);">=</span><span>new-window;new-instance;</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span>[Desktop Action new-window]</span></span>
+<span class="giallo-l"><span style="color: light-dark(#22863A, #85E89D);">Name</span><span style="color: light-dark(#D73A49, #F97583);">=</span><span>New Window</span></span>
+<span class="giallo-l"><span style="color: light-dark(#22863A, #85E89D);">Exec</span><span style="color: light-dark(#D73A49, #F97583);">=</span><span>/usr/local/bin/emacsclient --alternate-editor= --create-frame %F</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span>[Desktop Action new-instance]</span></span>
+<span class="giallo-l"><span style="color: light-dark(#22863A, #85E89D);">Name</span><span style="color: light-dark(#D73A49, #F97583);">=</span><span>New Instance</span></span>
+<span class="giallo-l"><span style="color: light-dark(#22863A, #85E89D);">Exec</span><span style="color: light-dark(#D73A49, #F97583);">=</span><span>emacs %F</span></span></code></pre>
+<p>Right now, I'm keeping the systemd services and just let that file pick up the
+existing client.</p>
+<p>I've also bound calling the client to <kbd>Super+E</kbd> to get a new frame
+quickly wherever I am on the system and aliased <code>e=$EDITOR</code> to open the editor
+in the terminal.</p>
+<h2 id="using-multiple-emacs-clients">Using multiple Emacs clients</h2>
+<p>I've had a couple annoyances since the Emacs configuration is loaded once when
+the client is created and changes, like themes, are reflected on the client and
+all frames connecting to it.</p>
+<p>I generally change my theme based on the time of day in the GUI but I want it to
+stay a dark theme in the CLI in general. I also want to load some packages only
+in graphical mode, like <code>org-mode</code>. For example,</p>
+<pre class="giallo" style="color-scheme: light dark; color: light-dark(#24292E, #E1E4E8); background-color: light-dark(#FFFFFF, #24292E);"><code data-lang="emacs-lisp"><span class="giallo-l"><span>(</span><span style="color: light-dark(#005CC5, #79B8FF);">use-package</span><span style="color: light-dark(#005CC5, #79B8FF);"> org</span></span>
+<span class="giallo-l"><span style="color: light-dark(#005CC5, #79B8FF);">  :</span><span style="color: light-dark(#005CC5, #79B8FF);">pin</span><span style="color: light-dark(#005CC5, #79B8FF);"> gnu</span></span>
+<span class="giallo-l"><span style="color: light-dark(#005CC5, #79B8FF);">  :</span><span style="color: light-dark(#005CC5, #79B8FF);">ensure</span><span style="color: light-dark(#005CC5, #79B8FF);"> nil</span></span>
+<span class="giallo-l"><span style="color: light-dark(#005CC5, #79B8FF);">  :</span><span style="color: light-dark(#005CC5, #79B8FF);">defer</span><span style="color: light-dark(#005CC5, #79B8FF);"> t</span></span>
+<span class="giallo-l"><span style="color: light-dark(#005CC5, #79B8FF);">  :</span><span style="color: light-dark(#005CC5, #79B8FF);">diminish</span><span style="color: light-dark(#032F62, #9ECBFF);"> &quot;</span><span style="color: light-dark(#032F62, #9ECBFF);">Οrg</span><span style="color: light-dark(#032F62, #9ECBFF);">&quot;</span></span>
+<span class="giallo-l"><span style="color: light-dark(#005CC5, #79B8FF);">  :</span><span style="color: light-dark(#005CC5, #79B8FF);">if</span><span> (</span><span style="color: light-dark(#005CC5, #79B8FF);">display-graphic-p</span><span>)</span></span>
+<span class="giallo-l"><span style="color: light-dark(#005CC5, #79B8FF);">  :</span><span style="color: light-dark(#005CC5, #79B8FF);">custom</span></span>
+<span class="giallo-l"><span style="color: light-dark(#6A737D, #6A737D);">  ;</span><span style="color: light-dark(#6A737D, #6A737D);">; ... custom</span></span>
+<span class="giallo-l"><span style="color: light-dark(#005CC5, #79B8FF);">  :</span><span style="color: light-dark(#005CC5, #79B8FF);">config</span></span>
+<span class="giallo-l"><span style="color: light-dark(#6A737D, #6A737D);">  ;</span><span style="color: light-dark(#6A737D, #6A737D);">; ... config)</span></span></code></pre>
+<p>This prompted me to write a systemd service file for the GUI and the other for
+the TUI. Which Emacs lets us do easily: you can name the socket you expose the
+client on.</p>
+<blockquote>
+<p>This is getting out of hand, now there are two of them!</p>
+</blockquote>
+<pre class="giallo" style="color-scheme: light dark; color: light-dark(#24292E, #E1E4E8); background-color: light-dark(#FFFFFF, #24292E);"><code data-lang="systemd"><span class="giallo-l"><span style="color: light-dark(#6F42C1, #B392F0);">[Unit]</span></span>
+<span class="giallo-l"><span style="color: light-dark(#22863A, #85E89D);">Description</span><span style="color: light-dark(#D73A49, #F97583);">=</span><span>Emacs text editor (GUI)</span></span>
+<span class="giallo-l"><span style="color: light-dark(#22863A, #85E89D);">Documentation</span><span style="color: light-dark(#D73A49, #F97583);">=</span><span>info:emacs man:emacs(1) https://gnu.org/software/emacs/</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span style="color: light-dark(#6F42C1, #B392F0);">[Service]</span></span>
+<span class="giallo-l"><span style="color: light-dark(#22863A, #85E89D);">Type</span><span style="color: light-dark(#D73A49, #F97583);">=</span><span style="color: light-dark(#005CC5, #79B8FF);">notify</span></span>
+<span class="giallo-l"><span style="color: light-dark(#22863A, #85E89D);">ExecStart</span><span style="color: light-dark(#D73A49, #F97583);">=</span><span>/usr/bin/emacs --fg-daemon=gui</span></span>
+<span class="giallo-l"><span style="color: light-dark(#22863A, #85E89D);">ExecStop</span><span style="color: light-dark(#D73A49, #F97583);">=</span><span>/usr/bin/emacsclient -s gui --eval </span><span style="color: light-dark(#032F62, #9ECBFF);">&quot;</span><span style="color: light-dark(#032F62, #9ECBFF);">(kill-emacs)</span><span style="color: light-dark(#032F62, #9ECBFF);">&quot;</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span style="color: light-dark(#6A737D, #6A737D);"># Emacs will exit with status 15 after having received SIGTERM, which</span></span>
+<span class="giallo-l"><span style="color: light-dark(#6A737D, #6A737D);"># is the default &quot;KillSignal&quot; value systemd uses to stop services.</span></span>
+<span class="giallo-l"><span style="color: light-dark(#22863A, #85E89D);">SuccessExitStatus</span><span style="color: light-dark(#D73A49, #F97583);">=</span><span style="color: light-dark(#005CC5, #79B8FF);">15</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span style="color: light-dark(#6A737D, #6A737D);"># The location of the SSH auth socket varies by distribution, and some</span></span>
+<span class="giallo-l"><span style="color: light-dark(#6A737D, #6A737D);"># set it from PAM, so don&#39;t override by default.</span></span>
+<span class="giallo-l"><span style="color: light-dark(#6A737D, #6A737D);"># Environment=SSH_AUTH_SOCK=%t/keyring/ssh</span></span>
+<span class="giallo-l"><span style="color: light-dark(#22863A, #85E89D);">Restart</span><span style="color: light-dark(#D73A49, #F97583);">=</span><span style="color: light-dark(#005CC5, #79B8FF);">on-failure</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span style="color: light-dark(#6F42C1, #B392F0);">[Install]</span></span>
+<span class="giallo-l"><span style="color: light-dark(#22863A, #85E89D);">WantedBy</span><span style="color: light-dark(#D73A49, #F97583);">=</span><span>default.target</span></span></code></pre>
+<p>and</p>
+<pre class="giallo" style="color-scheme: light dark; color: light-dark(#24292E, #E1E4E8); background-color: light-dark(#FFFFFF, #24292E);"><code data-lang="systemd"><span class="giallo-l"><span style="color: light-dark(#6F42C1, #B392F0);">[Unit]</span></span>
+<span class="giallo-l"><span style="color: light-dark(#22863A, #85E89D);">Description</span><span style="color: light-dark(#D73A49, #F97583);">=</span><span>Emacs text editor (TUI)</span></span>
+<span class="giallo-l"><span style="color: light-dark(#22863A, #85E89D);">Documentation</span><span style="color: light-dark(#D73A49, #F97583);">=</span><span>info:emacs man:emacs(1) https://gnu.org/software/emacs/</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span style="color: light-dark(#6F42C1, #B392F0);">[Service]</span></span>
+<span class="giallo-l"><span style="color: light-dark(#22863A, #85E89D);">Type</span><span style="color: light-dark(#D73A49, #F97583);">=</span><span style="color: light-dark(#005CC5, #79B8FF);">notify</span></span>
+<span class="giallo-l"><span style="color: light-dark(#22863A, #85E89D);">ExecStart</span><span style="color: light-dark(#D73A49, #F97583);">=</span><span>/usr/bin/emacs --fg-daemon=tui</span></span>
+<span class="giallo-l"><span style="color: light-dark(#22863A, #85E89D);">ExecStop</span><span style="color: light-dark(#D73A49, #F97583);">=</span><span>/usr/bin/emacsclient -s tui --eval </span><span style="color: light-dark(#032F62, #9ECBFF);">&quot;</span><span style="color: light-dark(#032F62, #9ECBFF);">(kill-emacs)</span><span style="color: light-dark(#032F62, #9ECBFF);">&quot;</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span style="color: light-dark(#6A737D, #6A737D);"># Emacs will exit with status 15 after having received SIGTERM, which</span></span>
+<span class="giallo-l"><span style="color: light-dark(#6A737D, #6A737D);"># is the default &quot;KillSignal&quot; value systemd uses to stop services.</span></span>
+<span class="giallo-l"><span style="color: light-dark(#22863A, #85E89D);">SuccessExitStatus</span><span style="color: light-dark(#D73A49, #F97583);">=</span><span style="color: light-dark(#005CC5, #79B8FF);">15</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span style="color: light-dark(#6A737D, #6A737D);"># The location of the SSH auth socket varies by distribution, and some</span></span>
+<span class="giallo-l"><span style="color: light-dark(#6A737D, #6A737D);"># set it from PAM, so don&#39;t override by default.</span></span>
+<span class="giallo-l"><span style="color: light-dark(#6A737D, #6A737D);"># Environment=SSH_AUTH_SOCK=%t/keyring/ssh</span></span>
+<span class="giallo-l"><span style="color: light-dark(#22863A, #85E89D);">Restart</span><span style="color: light-dark(#D73A49, #F97583);">=</span><span style="color: light-dark(#005CC5, #79B8FF);">on-failure</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span style="color: light-dark(#6F42C1, #B392F0);">[Install]</span></span>
+<span class="giallo-l"><span style="color: light-dark(#22863A, #85E89D);">WantedBy</span><span style="color: light-dark(#D73A49, #F97583);">=</span><span>default.target</span></span></code></pre>
+<p>As a result, the desktop file needs to refer to the <code>gui</code> client and the editor
+in the terminal needs to refer to the <code>tui</code> client.</p>
+<pre class="giallo" style="color-scheme: light dark; color: light-dark(#24292E, #E1E4E8); background-color: light-dark(#FFFFFF, #24292E);"><code data-lang="systemd"><span class="giallo-l"><span>[Desktop Entry]</span></span>
+<span class="giallo-l"><span style="color: light-dark(#22863A, #85E89D);">Name</span><span style="color: light-dark(#D73A49, #F97583);">=</span><span>Emacs (Client)</span></span>
+<span class="giallo-l"><span style="color: light-dark(#22863A, #85E89D);">GenericName</span><span style="color: light-dark(#D73A49, #F97583);">=</span><span>Text Editor</span></span>
+<span class="giallo-l"><span style="color: light-dark(#22863A, #85E89D);">Comment</span><span style="color: light-dark(#D73A49, #F97583);">=</span><span>Edit text</span></span>
+<span class="giallo-l"><span style="color: light-dark(#22863A, #85E89D);">MimeType</span><span style="color: light-dark(#D73A49, #F97583);">=</span><span>text/english;text/plain;text/x-makefile;text/x-c++hdr;text/x-c++src;text/x-chdr;text/x-csrc;text/x-java;text/x-moc;text/x-pascal;text/x-tcl;text/x-tex;application/x-shellscript;text/x-c;text/x-c++;x-scheme-handler/org-protocol;</span></span>
+<span class="giallo-l"><span style="color: light-dark(#22863A, #85E89D);">Exec</span><span style="color: light-dark(#D73A49, #F97583);">=</span><span>sh -c </span><span style="color: light-dark(#032F62, #9ECBFF);">&quot;</span><span style="color: light-dark(#032F62, #9ECBFF);">if [ -n </span><span style="color: light-dark(#005CC5, #79B8FF);">\\</span><span style="color: light-dark(#032F62, #9ECBFF);">&quot;</span><span>\\$*\\&quot; ]; then exec /usr/local/bin/emacsclient -s gui --reuse-frame \\&quot;\\$@\\&quot;; else exec /usr/local/bin/emacsclient -s gui --create-frame; fi&quot; sh %F</span></span>
+<span class="giallo-l"><span style="color: light-dark(#22863A, #85E89D);">Icon</span><span style="color: light-dark(#D73A49, #F97583);">=</span><span>emacs</span></span>
+<span class="giallo-l"><span style="color: light-dark(#22863A, #85E89D);">Type</span><span style="color: light-dark(#D73A49, #F97583);">=</span><span>Application</span></span>
+<span class="giallo-l"><span style="color: light-dark(#22863A, #85E89D);">Terminal</span><span style="color: light-dark(#D73A49, #F97583);">=</span><span style="color: light-dark(#005CC5, #79B8FF);">false</span></span>
+<span class="giallo-l"><span style="color: light-dark(#22863A, #85E89D);">Categories</span><span style="color: light-dark(#D73A49, #F97583);">=</span><span>Development;TextEditor;</span></span>
+<span class="giallo-l"><span style="color: light-dark(#22863A, #85E89D);">StartupNotify</span><span style="color: light-dark(#D73A49, #F97583);">=</span><span style="color: light-dark(#005CC5, #79B8FF);">true</span></span>
+<span class="giallo-l"><span style="color: light-dark(#22863A, #85E89D);">StartupWMClass</span><span style="color: light-dark(#D73A49, #F97583);">=</span><span>Emacs</span></span>
+<span class="giallo-l"><span style="color: light-dark(#22863A, #85E89D);">Keywords</span><span style="color: light-dark(#D73A49, #F97583);">=</span><span>emacsclient;</span></span>
+<span class="giallo-l"><span style="color: light-dark(#22863A, #85E89D);">Actions</span><span style="color: light-dark(#D73A49, #F97583);">=</span><span>new-window;new-instance;</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span>[Desktop Action new-window]</span></span>
+<span class="giallo-l"><span style="color: light-dark(#22863A, #85E89D);">Name</span><span style="color: light-dark(#D73A49, #F97583);">=</span><span>New Window</span></span>
+<span class="giallo-l"><span style="color: light-dark(#22863A, #85E89D);">Exec</span><span style="color: light-dark(#D73A49, #F97583);">=</span><span>/usr/local/bin/emacsclient -s gui --create-frame %F</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span>[Desktop Action new-instance]</span></span>
+<span class="giallo-l"><span style="color: light-dark(#22863A, #85E89D);">Name</span><span style="color: light-dark(#D73A49, #F97583);">=</span><span>New Instance</span></span>
+<span class="giallo-l"><span style="color: light-dark(#6A737D, #6A737D);"># Use background daemon that will die when the frame is closed</span></span>
+<span class="giallo-l"><span style="color: light-dark(#22863A, #85E89D);">Exec</span><span style="color: light-dark(#D73A49, #F97583);">=</span><span>emacs --daemon=gui-temp -Q &amp;&amp; emacsclient -s gui-temp --create-frame %F</span></span></code></pre><pre class="giallo" style="color-scheme: light dark; color: light-dark(#24292E, #E1E4E8); background-color: light-dark(#FFFFFF, #24292E);"><code data-lang="shellscript"><span class="giallo-l"><span style="color: light-dark(#6A737D, #6A737D);">#!</span><span style="color: light-dark(#6A737D, #6A737D);">/bin/sh</span></span>
+<span class="giallo-l"><span style="color: light-dark(#005CC5, #79B8FF);">exec</span><span style="color: light-dark(#032F62, #9ECBFF);"> emacsclient</span><span style="color: light-dark(#005CC5, #79B8FF);"> -</span><span style="color: light-dark(#005CC5, #79B8FF);">s</span><span style="color: light-dark(#032F62, #9ECBFF);"> tui</span><span style="color: light-dark(#005CC5, #79B8FF);"> -</span><span style="color: light-dark(#005CC5, #79B8FF);">t</span><span style="color: light-dark(#005CC5, #79B8FF);"> -</span><span style="color: light-dark(#005CC5, #79B8FF);">a=</span><span style="color: light-dark(#032F62, #9ECBFF);">&quot;</span><span style="color: light-dark(#032F62, #9ECBFF);">&quot;</span><span style="color: light-dark(#032F62, #9ECBFF);"> &quot;</span><span style="color: light-dark(#005CC5, #79B8FF);">$</span><span style="color: light-dark(#005CC5, #79B8FF);">@</span><span style="color: light-dark(#032F62, #9ECBFF);">&quot;</span></span></code></pre>
+<p>Finally, you can reload the systemd daemon and start then enable the services:</p>
+<pre class="giallo" style="color-scheme: light dark; color: light-dark(#24292E, #E1E4E8); background-color: light-dark(#FFFFFF, #24292E);"><code data-lang="shellscript"><span class="giallo-l"><span style="color: light-dark(#6F42C1, #B392F0);">systemctl</span><span style="color: light-dark(#005CC5, #79B8FF);"> -</span><span style="color: light-dark(#005CC5, #79B8FF);">-user</span><span style="color: light-dark(#032F62, #9ECBFF);"> daemon-reload</span></span>
+<span class="giallo-l"><span style="color: light-dark(#6F42C1, #B392F0);">systemctl</span><span style="color: light-dark(#005CC5, #79B8FF);"> -</span><span style="color: light-dark(#005CC5, #79B8FF);">-user</span><span style="color: light-dark(#032F62, #9ECBFF);"> enable</span><span style="color: light-dark(#032F62, #9ECBFF);"> emacsd-gui.service</span><span style="color: light-dark(#032F62, #9ECBFF);"> emacsd-tui.service</span></span>
+<span class="giallo-l"><span style="color: light-dark(#6F42C1, #B392F0);">systemctl</span><span style="color: light-dark(#005CC5, #79B8FF);"> -</span><span style="color: light-dark(#005CC5, #79B8FF);">-user</span><span style="color: light-dark(#032F62, #9ECBFF);"> start</span><span style="color: light-dark(#032F62, #9ECBFF);"> emacsd-gui.service</span><span style="color: light-dark(#032F62, #9ECBFF);"> emacsd-tui.service</span></span></code></pre>
+<p>That's all for me, I honestly didn't think that trying to fix
+<kbd>Ctrl+Backspace</kbd> would become such an adventure.</p>
+
+
+      </main>
+    <footer>
+      Nathan Furnal © 2026
+    </footer>
+  </body>
+</html>

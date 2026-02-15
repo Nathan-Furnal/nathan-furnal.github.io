@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+    <url>
+        <loc>https://blog.natfu.be/</loc>
+    </url>
+    <url>
+        <loc>https://blog.natfu.be/about/</loc>
+        <lastmod>2025-07-03</lastmod>
+    </url>
+    <url>
+        <loc>https://blog.natfu.be/categories/</loc>
+    </url>
+    <url>
+        <loc>https://blog.natfu.be/emacs-in-terminal-ergonomics/</loc>
+        <lastmod>2025-10-19</lastmod>
+    </url>
+    <url>
+        <loc>https://blog.natfu.be/managing-settings-in-python-projects/</loc>
+        <lastmod>2025-07-05</lastmod>
+    </url>
+    <url>
+        <loc>https://blog.natfu.be/no-python-dotenv/</loc>
+        <lastmod>2025-09-06</lastmod>
+    </url>
+    <url>
+        <loc>https://blog.natfu.be/tags/</loc>
+    </url>
+    <url>
+        <loc>https://blog.natfu.be/validation-in-type-annotations/</loc>
+        <lastmod>2026-02-15</lastmod>
+    </url>
+</urlset>

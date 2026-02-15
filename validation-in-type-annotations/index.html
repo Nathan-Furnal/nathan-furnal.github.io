@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+      <!-- Title handling -->
+    <title>Runtime validation in type annotations | Gribouillis</title>
+    <!-- Meta description -->
+    <meta name="description" content="Mindless sketches ✐ᝰ">
+    <link rel="stylesheet" href="https://blog.natfu.be/css/main.css">
+      <!-- RSS Feed -->
+      
+    <link rel="alternate" type="application/rss+xml" title="RSS" href="https://blog.natfu.be/rss.xml">
+      
+  </head>
+  <body>
+    <header>
+      <div class="nav-container">
+        <div class="nav-heading">
+          <div class="font-3rem">Gribouillis</div>
+          <p>Mindless sketches ✐ᝰ</p>
+        </div>
+        <div class="nav-content">
+          <nav>
+            <a href="https://blog.natfu.be">Posts</a>
+            <a href="https://blog.natfu.be/about">About</a>
+          </nav>
+        </div>
+      </div>
+    </header>
+    <main role="main">
+      
+<h1 class="title">
+  Runtime validation in type annotations
+</h1>
+    <div class="post-meta">
+      <time class="published" datetime="2026-02-15">
+        Published: February 15, 2026
+      </time>
+
+      
+    </div>
+<hr class="separator">
+<h2 id="motivation">Motivation</h2>
+<p>I was trying to understand a pattern I've seen in libraries like
+<a rel="noopener external" target="_blank" href="https://fastapi.tiangolo.com/tutorial/query-params-str-validations/#use-annotated-in-the-type-for-the-q-parameter">FastAPI</a>,
+<a rel="noopener external" target="_blank" href="https://docs.pydantic.dev/latest/concepts/fields/#the-annotated-pattern">pydantic</a> or
+<a rel="noopener external" target="_blank" href="https://cyclopts.readthedocs.io/en/stable/groups.html#validators">cyclopts</a>; where type
+annotations are used for runtime validation via <code>typing.Annotated</code>.</p>
+<p>You'll also see such examples straight from the
+<a rel="noopener external" target="_blank" href="https://docs.python.org/3/library/typing.html#typing.Annotated">Python documentation</a>
+but without an explicit example in how to implement the validation.</p>
+<p>Here's what I've come up with as a minimal example.</p>
+<h2 id="type-annotation-metadata">Type annotation metadata</h2>
+<p>We can retrieve type annotations metadata with <code>typing.get_type_hints</code> when applied to a
+type.</p>
+<pre class="giallo" style="color-scheme: light dark; color: light-dark(#24292E, #E1E4E8); background-color: light-dark(#FFFFFF, #24292E);"><code data-lang="python"><span class="giallo-l"><span style="color: light-dark(#D73A49, #F97583);">import</span><span> typing</span><span style="color: light-dark(#D73A49, #F97583);"> as</span><span> t</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span style="color: light-dark(#D73A49, #F97583);">class</span><span style="color: light-dark(#6F42C1, #B392F0);"> A</span><span>:</span></span>
+<span class="giallo-l"><span>    x</span><span>:</span><span style="color: light-dark(#005CC5, #79B8FF);"> int</span></span>
+<span class="giallo-l"><span>    y</span><span>:</span><span> t</span><span>.</span><span>Annotated</span><span>[</span><span style="color: light-dark(#005CC5, #79B8FF);">int</span><span>,</span><span style="color: light-dark(#032F62, #9ECBFF);"> &quot;</span><span style="color: light-dark(#032F62, #9ECBFF);">metadata</span><span style="color: light-dark(#032F62, #9ECBFF);">&quot;</span><span>]</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span style="color: light-dark(#D73A49, #F97583);">    def</span><span style="color: light-dark(#005CC5, #79B8FF);"> __init__</span><span>(</span><span>self</span><span>,</span><span> x</span><span>:</span><span style="color: light-dark(#005CC5, #79B8FF);"> int</span><span>,</span><span> y</span><span>:</span><span style="color: light-dark(#005CC5, #79B8FF);"> int</span><span>)</span><span>:</span></span>
+<span class="giallo-l"><span style="color: light-dark(#005CC5, #79B8FF);">        self</span><span>.</span><span>x</span><span style="color: light-dark(#D73A49, #F97583);"> =</span><span> x</span></span>
+<span class="giallo-l"><span style="color: light-dark(#005CC5, #79B8FF);">        self</span><span>.</span><span>y</span><span style="color: light-dark(#D73A49, #F97583);"> =</span><span> y</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span>annotations</span><span style="color: light-dark(#D73A49, #F97583);"> =</span><span> t</span><span>.</span><span>get_type_hints</span><span>(</span><span>A</span><span>,</span><span style="color: light-dark(#E36209, #FFAB70);"> include_extras</span><span style="color: light-dark(#D73A49, #F97583);">=</span><span style="color: light-dark(#005CC5, #79B8FF);">True</span><span>)</span></span></code></pre>
+<p>We could also write the shorter,</p>
+<pre class="giallo" style="color-scheme: light dark; color: light-dark(#24292E, #E1E4E8); background-color: light-dark(#FFFFFF, #24292E);"><code data-lang="python"><span class="giallo-l"><span style="color: light-dark(#D73A49, #F97583);">from</span><span> dataclasses</span><span style="color: light-dark(#D73A49, #F97583);"> import</span><span> dataclass</span></span>
+<span class="giallo-l"><span style="color: light-dark(#D73A49, #F97583);">import</span><span> typing</span><span style="color: light-dark(#D73A49, #F97583);"> as</span><span> t</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span style="color: light-dark(#6F42C1, #B392F0);">@</span><span style="color: light-dark(#6F42C1, #B392F0);">dataclass</span></span>
+<span class="giallo-l"><span style="color: light-dark(#D73A49, #F97583);">class</span><span style="color: light-dark(#6F42C1, #B392F0);"> A</span><span>:</span></span>
+<span class="giallo-l"><span>    x</span><span>:</span><span style="color: light-dark(#005CC5, #79B8FF);"> int</span></span>
+<span class="giallo-l"><span>    y</span><span>:</span><span> t</span><span>.</span><span>Annotated</span><span>[</span><span style="color: light-dark(#005CC5, #79B8FF);">int</span><span>,</span><span style="color: light-dark(#032F62, #9ECBFF);"> &quot;</span><span style="color: light-dark(#032F62, #9ECBFF);">metadata</span><span style="color: light-dark(#032F62, #9ECBFF);">&quot;</span><span>]</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span>annotations</span><span style="color: light-dark(#D73A49, #F97583);"> =</span><span> t</span><span>.</span><span>get_type_hints</span><span>(</span><span>A</span><span>,</span><span style="color: light-dark(#E36209, #FFAB70);"> include_extras</span><span style="color: light-dark(#D73A49, #F97583);">=</span><span style="color: light-dark(#005CC5, #79B8FF);">True</span><span>)</span></span></code></pre>
+<p>Which gets you, in both cases, the annotations:</p>
+<pre class="giallo" style="color-scheme: light dark; color: light-dark(#24292E, #E1E4E8); background-color: light-dark(#FFFFFF, #24292E);"><code data-lang="python"><span class="giallo-l"><span>{</span><span style="color: light-dark(#032F62, #9ECBFF);">&#39;</span><span style="color: light-dark(#032F62, #9ECBFF);">x</span><span style="color: light-dark(#032F62, #9ECBFF);">&#39;</span><span>:</span><span style="color: light-dark(#D73A49, #F97583);"> &lt;</span><span style="color: light-dark(#D73A49, #F97583);">class</span><span style="color: light-dark(#032F62, #9ECBFF);"> &#39;</span><span style="color: light-dark(#032F62, #9ECBFF);">int</span><span style="color: light-dark(#032F62, #9ECBFF);">&#39;</span><span style="color: light-dark(#D73A49, #F97583);">&gt;</span><span>,</span><span style="color: light-dark(#032F62, #9ECBFF);"> &#39;</span><span style="color: light-dark(#032F62, #9ECBFF);">y</span><span style="color: light-dark(#032F62, #9ECBFF);">&#39;</span><span>:</span><span> typing</span><span>.</span><span>Annotated</span><span>[</span><span style="color: light-dark(#005CC5, #79B8FF);">int</span><span>,</span><span style="color: light-dark(#032F62, #9ECBFF);"> &#39;</span><span style="color: light-dark(#032F62, #9ECBFF);">metadata</span><span style="color: light-dark(#032F62, #9ECBFF);">&#39;</span><span>]</span><span>}</span></span></code></pre>
+<p>The metadata is permissive and just like the example in the documentation (reproduced
+here), you can pass objects as metadata.</p>
+<pre class="giallo" style="color-scheme: light dark; color: light-dark(#24292E, #E1E4E8); background-color: light-dark(#FFFFFF, #24292E);"><code data-lang="python"><span class="giallo-l"><span style="color: light-dark(#D73A49, #F97583);">from</span><span> dataclasses</span><span style="color: light-dark(#D73A49, #F97583);"> import</span><span> dataclass</span></span>
+<span class="giallo-l"><span style="color: light-dark(#D73A49, #F97583);">from</span><span> typing</span><span style="color: light-dark(#D73A49, #F97583);"> import</span><span> Annotated</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span style="color: light-dark(#6F42C1, #B392F0);">@</span><span style="color: light-dark(#6F42C1, #B392F0);">dataclass</span></span>
+<span class="giallo-l"><span style="color: light-dark(#D73A49, #F97583);">class</span><span style="color: light-dark(#6F42C1, #B392F0);"> ValueRange</span><span>:</span></span>
+<span class="giallo-l"><span>    lo</span><span>:</span><span style="color: light-dark(#005CC5, #79B8FF);"> int</span></span>
+<span class="giallo-l"><span>    hi</span><span>:</span><span style="color: light-dark(#005CC5, #79B8FF);"> int</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span>T1</span><span style="color: light-dark(#D73A49, #F97583);"> =</span><span> Annotated</span><span>[</span><span style="color: light-dark(#005CC5, #79B8FF);">int</span><span>,</span><span> ValueRange</span><span>(</span><span style="color: light-dark(#D73A49, #F97583);">-</span><span style="color: light-dark(#005CC5, #79B8FF);">10</span><span>,</span><span style="color: light-dark(#005CC5, #79B8FF);"> 5</span><span>)</span><span>]</span></span>
+<span class="giallo-l"><span>T2</span><span style="color: light-dark(#D73A49, #F97583);"> =</span><span> Annotated</span><span>[</span><span>T1</span><span>,</span><span> ValueRange</span><span>(</span><span style="color: light-dark(#D73A49, #F97583);">-</span><span style="color: light-dark(#005CC5, #79B8FF);">20</span><span>,</span><span style="color: light-dark(#005CC5, #79B8FF);"> 3</span><span>)</span><span>]</span></span></code></pre><h2 id="using-the-metadata">Using the metadata</h2>
+<p>It's up to you, the developer, to handle the metadata. The way I see it, I'd like to go
+over the <strong>callable</strong> metadata if it exists and call it on the attribute. I also want to
+avoid errors on code that doesn't provide additional metadata in annotations.</p>
+<p>I've made some executive choices here:</p>
+<ul>
+<li>Using a frozen <code>dataclass</code> because I think immutability as a default is better.</li>
+<li>Retrieve the <code>__metadata__</code> if it exists and only get the <code>callable</code>s amongst them.</li>
+<li>Apply the callable(s) in the metadata to the attribute.</li>
+</ul>
+<p>Note the <code>object.__setattr__</code> which is
+<a rel="noopener external" target="_blank" href="https://docs.python.org/3/library/dataclasses.html#frozen-instances">the escape hatch</a>
+to modify frozen instances of dataclasses during post-initialization.</p>
+<pre class="giallo" style="color-scheme: light dark; color: light-dark(#24292E, #E1E4E8); background-color: light-dark(#FFFFFF, #24292E);"><code data-lang="python"><span class="giallo-l"><span style="color: light-dark(#D73A49, #F97583);">from</span><span> dataclasses</span><span style="color: light-dark(#D73A49, #F97583);"> import</span><span> dataclass</span></span>
+<span class="giallo-l"><span style="color: light-dark(#D73A49, #F97583);">import</span><span> typing</span><span style="color: light-dark(#D73A49, #F97583);"> as</span><span> t</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span style="color: light-dark(#6F42C1, #B392F0);">@</span><span style="color: light-dark(#6F42C1, #B392F0);">dataclass</span><span>(</span><span style="color: light-dark(#E36209, #FFAB70);">frozen</span><span style="color: light-dark(#D73A49, #F97583);">=</span><span style="color: light-dark(#005CC5, #79B8FF);">True</span><span>)</span></span>
+<span class="giallo-l"><span style="color: light-dark(#D73A49, #F97583);">class</span><span style="color: light-dark(#6F42C1, #B392F0);"> Base</span><span>:</span></span>
+<span class="giallo-l"><span style="color: light-dark(#D73A49, #F97583);">    def</span><span style="color: light-dark(#005CC5, #79B8FF);"> __post_init__</span><span>(</span><span>self</span><span>)</span><span>:</span></span>
+<span class="giallo-l"><span>        annotations</span><span style="color: light-dark(#D73A49, #F97583);"> =</span><span> t</span><span>.</span><span>get_type_hints</span><span>(</span><span style="color: light-dark(#005CC5, #79B8FF);">type</span><span>(</span><span style="color: light-dark(#005CC5, #79B8FF);">self</span><span>)</span><span>,</span><span style="color: light-dark(#E36209, #FFAB70);"> include_extras</span><span style="color: light-dark(#D73A49, #F97583);">=</span><span style="color: light-dark(#005CC5, #79B8FF);">True</span><span>)</span></span>
+<span class="giallo-l"><span style="color: light-dark(#D73A49, #F97583);">        for</span><span> k</span><span>,</span><span> annot</span><span style="color: light-dark(#D73A49, #F97583);"> in</span><span> annotations</span><span>.</span><span>items</span><span>(</span><span>)</span><span>:</span></span>
+<span class="giallo-l"><span>            callables</span><span style="color: light-dark(#D73A49, #F97583);"> =</span><span> [</span><span>elem</span><span style="color: light-dark(#D73A49, #F97583);"> for</span><span> elem</span><span style="color: light-dark(#D73A49, #F97583);"> in</span><span style="color: light-dark(#005CC5, #79B8FF);"> getattr</span><span>(</span><span>annot</span><span>,</span><span style="color: light-dark(#032F62, #9ECBFF);"> &quot;</span><span style="color: light-dark(#032F62, #9ECBFF);">__metadata__</span><span style="color: light-dark(#032F62, #9ECBFF);">&quot;</span><span>,</span><span> [</span><span>]</span><span>)</span><span style="color: light-dark(#D73A49, #F97583);"> if</span><span style="color: light-dark(#005CC5, #79B8FF);"> callable</span><span>(</span><span>elem</span><span>)</span><span>]</span></span>
+<span class="giallo-l"><span style="color: light-dark(#D73A49, #F97583);">            for</span><span> f</span><span style="color: light-dark(#D73A49, #F97583);"> in</span><span> callables</span><span>:</span></span>
+<span class="giallo-l"><span>                val</span><span style="color: light-dark(#D73A49, #F97583);"> =</span><span style="color: light-dark(#005CC5, #79B8FF);"> getattr</span><span>(</span><span style="color: light-dark(#005CC5, #79B8FF);">self</span><span>,</span><span> k</span><span>)</span></span>
+<span class="giallo-l"><span style="color: light-dark(#005CC5, #79B8FF);">                object</span><span>.</span><span style="color: light-dark(#005CC5, #79B8FF);">__setattr__</span><span>(</span><span style="color: light-dark(#005CC5, #79B8FF);">self</span><span>,</span><span> k</span><span>,</span><span> f</span><span>(</span><span>val</span><span>)</span><span>)</span></span></code></pre>
+<p>Functions are callable objects and they are perfectly fine to use as metadata but we
+often want to call them with additional parameters when the instance is initialized, not
+directly in the annotation. The usual way to go around this issue is to create <code>callable</code>
+classes. Let's say we want to bound numeric values to certain ranges, we can do this
+similarly to what
+<a rel="noopener external" target="_blank" href="https://github.com/BrianPugh/cyclopts/blob/2d2ffbe40c2b567d1fcbc3914b0c6940922a8c4a/cyclopts/validators/_number.py">cyclopts does</a>.</p>
+<pre class="giallo" style="color-scheme: light dark; color: light-dark(#24292E, #E1E4E8); background-color: light-dark(#FFFFFF, #24292E);"><code data-lang="python"><span class="giallo-l"><span style="color: light-dark(#D73A49, #F97583);">from</span><span> dataclasses</span><span style="color: light-dark(#D73A49, #F97583);"> import</span><span> dataclass</span></span>
+<span class="giallo-l"><span style="color: light-dark(#D73A49, #F97583);">import</span><span> typing</span><span style="color: light-dark(#D73A49, #F97583);"> as</span><span> t</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span style="color: light-dark(#D73A49, #F97583);">def</span><span style="color: light-dark(#6F42C1, #B392F0);"> _lt</span><span>(</span><span>value</span><span>:</span><span style="color: light-dark(#005CC5, #79B8FF);"> int</span><span style="color: light-dark(#D73A49, #F97583);"> |</span><span style="color: light-dark(#005CC5, #79B8FF);"> float</span><span>,</span><span> bound</span><span>:</span><span style="color: light-dark(#005CC5, #79B8FF);"> int</span><span style="color: light-dark(#D73A49, #F97583);"> |</span><span style="color: light-dark(#005CC5, #79B8FF);"> float</span><span>)</span><span> -&gt;</span><span style="color: light-dark(#005CC5, #79B8FF);"> int</span><span style="color: light-dark(#D73A49, #F97583);"> |</span><span style="color: light-dark(#005CC5, #79B8FF);"> float</span><span>:</span></span>
+<span class="giallo-l"><span style="color: light-dark(#D73A49, #F97583);">    if</span><span> value</span><span style="color: light-dark(#D73A49, #F97583);"> &gt;=</span><span> bound</span><span>:</span></span>
+<span class="giallo-l"><span style="color: light-dark(#D73A49, #F97583);">        raise</span><span style="color: light-dark(#005CC5, #79B8FF);"> ValueError</span><span>(</span><span style="color: light-dark(#D73A49, #F97583);">f</span><span style="color: light-dark(#032F62, #9ECBFF);">&quot;</span><span style="color: light-dark(#005CC5, #79B8FF);">{</span><span>value</span><span style="color: light-dark(#005CC5, #79B8FF);">}</span><span style="color: light-dark(#032F62, #9ECBFF);"> must be &lt; to </span><span style="color: light-dark(#005CC5, #79B8FF);">{</span><span>bound</span><span style="color: light-dark(#005CC5, #79B8FF);">}</span><span style="color: light-dark(#032F62, #9ECBFF);">&quot;</span><span>)</span></span>
+<span class="giallo-l"><span style="color: light-dark(#D73A49, #F97583);">    return</span><span> value</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span style="color: light-dark(#D73A49, #F97583);">def</span><span style="color: light-dark(#6F42C1, #B392F0);"> _lte</span><span>(</span><span>value</span><span>:</span><span style="color: light-dark(#005CC5, #79B8FF);"> int</span><span style="color: light-dark(#D73A49, #F97583);"> |</span><span style="color: light-dark(#005CC5, #79B8FF);"> float</span><span>,</span><span> bound</span><span>:</span><span style="color: light-dark(#005CC5, #79B8FF);"> int</span><span style="color: light-dark(#D73A49, #F97583);"> |</span><span style="color: light-dark(#005CC5, #79B8FF);"> float</span><span>)</span><span> -&gt;</span><span style="color: light-dark(#005CC5, #79B8FF);"> int</span><span style="color: light-dark(#D73A49, #F97583);"> |</span><span style="color: light-dark(#005CC5, #79B8FF);"> float</span><span>:</span></span>
+<span class="giallo-l"><span style="color: light-dark(#D73A49, #F97583);">    if</span><span> value</span><span style="color: light-dark(#D73A49, #F97583);"> &gt;</span><span> bound</span><span>:</span></span>
+<span class="giallo-l"><span style="color: light-dark(#D73A49, #F97583);">        raise</span><span style="color: light-dark(#005CC5, #79B8FF);"> ValueError</span><span>(</span><span style="color: light-dark(#D73A49, #F97583);">f</span><span style="color: light-dark(#032F62, #9ECBFF);">&quot;</span><span style="color: light-dark(#005CC5, #79B8FF);">{</span><span>value</span><span style="color: light-dark(#005CC5, #79B8FF);">}</span><span style="color: light-dark(#032F62, #9ECBFF);"> must be &lt;= to </span><span style="color: light-dark(#005CC5, #79B8FF);">{</span><span>bound</span><span style="color: light-dark(#005CC5, #79B8FF);">}</span><span style="color: light-dark(#032F62, #9ECBFF);">&quot;</span><span>)</span></span>
+<span class="giallo-l"><span style="color: light-dark(#D73A49, #F97583);">    return</span><span> value</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span style="color: light-dark(#D73A49, #F97583);">def</span><span style="color: light-dark(#6F42C1, #B392F0);"> _gt</span><span>(</span><span>value</span><span>:</span><span style="color: light-dark(#005CC5, #79B8FF);"> int</span><span style="color: light-dark(#D73A49, #F97583);"> |</span><span style="color: light-dark(#005CC5, #79B8FF);"> float</span><span>,</span><span> bound</span><span>:</span><span style="color: light-dark(#005CC5, #79B8FF);"> int</span><span style="color: light-dark(#D73A49, #F97583);"> |</span><span style="color: light-dark(#005CC5, #79B8FF);"> float</span><span>)</span><span> -&gt;</span><span style="color: light-dark(#005CC5, #79B8FF);"> int</span><span style="color: light-dark(#D73A49, #F97583);"> |</span><span style="color: light-dark(#005CC5, #79B8FF);"> float</span><span>:</span></span>
+<span class="giallo-l"><span style="color: light-dark(#D73A49, #F97583);">    if</span><span> value</span><span style="color: light-dark(#D73A49, #F97583);"> &lt;=</span><span> bound</span><span>:</span></span>
+<span class="giallo-l"><span style="color: light-dark(#D73A49, #F97583);">        raise</span><span style="color: light-dark(#005CC5, #79B8FF);"> ValueError</span><span>(</span><span style="color: light-dark(#D73A49, #F97583);">f</span><span style="color: light-dark(#032F62, #9ECBFF);">&quot;</span><span style="color: light-dark(#005CC5, #79B8FF);">{</span><span>value</span><span style="color: light-dark(#005CC5, #79B8FF);">}</span><span style="color: light-dark(#032F62, #9ECBFF);"> must be &gt; to </span><span style="color: light-dark(#005CC5, #79B8FF);">{</span><span>bound</span><span style="color: light-dark(#005CC5, #79B8FF);">}</span><span style="color: light-dark(#032F62, #9ECBFF);">&quot;</span><span>)</span></span>
+<span class="giallo-l"><span style="color: light-dark(#D73A49, #F97583);">    return</span><span> value</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span style="color: light-dark(#D73A49, #F97583);">def</span><span style="color: light-dark(#6F42C1, #B392F0);"> _gte</span><span>(</span><span>value</span><span>:</span><span style="color: light-dark(#005CC5, #79B8FF);"> int</span><span style="color: light-dark(#D73A49, #F97583);"> |</span><span style="color: light-dark(#005CC5, #79B8FF);"> float</span><span>,</span><span> bound</span><span>:</span><span style="color: light-dark(#005CC5, #79B8FF);"> int</span><span style="color: light-dark(#D73A49, #F97583);"> |</span><span style="color: light-dark(#005CC5, #79B8FF);"> float</span><span>)</span><span> -&gt;</span><span style="color: light-dark(#005CC5, #79B8FF);"> int</span><span style="color: light-dark(#D73A49, #F97583);"> |</span><span style="color: light-dark(#005CC5, #79B8FF);"> float</span><span>:</span></span>
+<span class="giallo-l"><span style="color: light-dark(#D73A49, #F97583);">    if</span><span> value</span><span style="color: light-dark(#D73A49, #F97583);"> &lt;</span><span> bound</span><span>:</span></span>
+<span class="giallo-l"><span style="color: light-dark(#D73A49, #F97583);">        raise</span><span style="color: light-dark(#005CC5, #79B8FF);"> ValueError</span><span>(</span><span style="color: light-dark(#D73A49, #F97583);">f</span><span style="color: light-dark(#032F62, #9ECBFF);">&quot;</span><span style="color: light-dark(#005CC5, #79B8FF);">{</span><span>value</span><span style="color: light-dark(#005CC5, #79B8FF);">}</span><span style="color: light-dark(#032F62, #9ECBFF);"> must be &gt;= to </span><span style="color: light-dark(#005CC5, #79B8FF);">{</span><span>bound</span><span style="color: light-dark(#005CC5, #79B8FF);">}</span><span style="color: light-dark(#032F62, #9ECBFF);">&quot;</span><span>)</span></span>
+<span class="giallo-l"><span style="color: light-dark(#D73A49, #F97583);">    return</span><span> value</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span style="color: light-dark(#6F42C1, #B392F0);">@</span><span style="color: light-dark(#6F42C1, #B392F0);">t</span><span style="color: light-dark(#6F42C1, #B392F0);">.</span><span style="color: light-dark(#6F42C1, #B392F0);">final</span><span style="color: light-dark(#6A737D, #6A737D);">  #</span><span style="color: light-dark(#6A737D, #6A737D);"> Don&#39;t subclass this</span></span>
+<span class="giallo-l"><span style="color: light-dark(#6F42C1, #B392F0);">@</span><span style="color: light-dark(#6F42C1, #B392F0);">dataclass</span><span>(</span><span style="color: light-dark(#E36209, #FFAB70);">frozen</span><span style="color: light-dark(#D73A49, #F97583);">=</span><span style="color: light-dark(#005CC5, #79B8FF);">True</span><span>)</span></span>
+<span class="giallo-l"><span style="color: light-dark(#D73A49, #F97583);">class</span><span style="color: light-dark(#6F42C1, #B392F0);"> Number</span><span>:</span></span>
+<span class="giallo-l"><span>    lt</span><span>:</span><span style="color: light-dark(#005CC5, #79B8FF);"> int</span><span style="color: light-dark(#D73A49, #F97583);"> |</span><span style="color: light-dark(#005CC5, #79B8FF);"> float</span><span style="color: light-dark(#D73A49, #F97583);"> |</span><span style="color: light-dark(#005CC5, #79B8FF);"> None</span><span style="color: light-dark(#D73A49, #F97583);"> =</span><span style="color: light-dark(#005CC5, #79B8FF);"> None</span></span>
+<span class="giallo-l"><span>    lte</span><span>:</span><span style="color: light-dark(#005CC5, #79B8FF);"> int</span><span style="color: light-dark(#D73A49, #F97583);"> |</span><span style="color: light-dark(#005CC5, #79B8FF);"> float</span><span style="color: light-dark(#D73A49, #F97583);"> |</span><span style="color: light-dark(#005CC5, #79B8FF);"> None</span><span style="color: light-dark(#D73A49, #F97583);"> =</span><span style="color: light-dark(#005CC5, #79B8FF);"> None</span></span>
+<span class="giallo-l"><span>    gt</span><span>:</span><span style="color: light-dark(#005CC5, #79B8FF);"> int</span><span style="color: light-dark(#D73A49, #F97583);"> |</span><span style="color: light-dark(#005CC5, #79B8FF);"> float</span><span style="color: light-dark(#D73A49, #F97583);"> |</span><span style="color: light-dark(#005CC5, #79B8FF);"> None</span><span style="color: light-dark(#D73A49, #F97583);"> =</span><span style="color: light-dark(#005CC5, #79B8FF);"> None</span></span>
+<span class="giallo-l"><span>    gte</span><span>:</span><span style="color: light-dark(#005CC5, #79B8FF);"> int</span><span style="color: light-dark(#D73A49, #F97583);"> |</span><span style="color: light-dark(#005CC5, #79B8FF);"> float</span><span style="color: light-dark(#D73A49, #F97583);"> |</span><span style="color: light-dark(#005CC5, #79B8FF);"> None</span><span style="color: light-dark(#D73A49, #F97583);"> =</span><span style="color: light-dark(#005CC5, #79B8FF);"> None</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span style="color: light-dark(#D73A49, #F97583);">    def</span><span style="color: light-dark(#005CC5, #79B8FF);"> __call__</span><span>(</span><span>self</span><span>,</span><span> value</span><span>:</span><span style="color: light-dark(#005CC5, #79B8FF);"> int</span><span style="color: light-dark(#D73A49, #F97583);"> |</span><span style="color: light-dark(#005CC5, #79B8FF);"> float</span><span>)</span><span> -&gt;</span><span style="color: light-dark(#005CC5, #79B8FF);"> int</span><span style="color: light-dark(#D73A49, #F97583);"> |</span><span style="color: light-dark(#005CC5, #79B8FF);"> float</span><span>:</span></span>
+<span class="giallo-l"><span style="color: light-dark(#D73A49, #F97583);">        if</span><span style="color: light-dark(#005CC5, #79B8FF);"> self</span><span>.</span><span>lt</span><span style="color: light-dark(#D73A49, #F97583);"> is</span><span style="color: light-dark(#D73A49, #F97583);"> not</span><span style="color: light-dark(#005CC5, #79B8FF);"> None</span><span>:</span></span>
+<span class="giallo-l"><span>            value</span><span style="color: light-dark(#D73A49, #F97583);"> =</span><span> _lt</span><span>(</span><span>value</span><span>,</span><span style="color: light-dark(#005CC5, #79B8FF);"> self</span><span>.</span><span>lt</span><span>)</span></span>
+<span class="giallo-l"><span style="color: light-dark(#D73A49, #F97583);">        if</span><span style="color: light-dark(#005CC5, #79B8FF);"> self</span><span>.</span><span>lte</span><span style="color: light-dark(#D73A49, #F97583);"> is</span><span style="color: light-dark(#D73A49, #F97583);"> not</span><span style="color: light-dark(#005CC5, #79B8FF);"> None</span><span>:</span></span>
+<span class="giallo-l"><span>            value</span><span style="color: light-dark(#D73A49, #F97583);"> =</span><span> _lte</span><span>(</span><span>value</span><span>,</span><span style="color: light-dark(#005CC5, #79B8FF);"> self</span><span>.</span><span>lte</span><span>)</span></span>
+<span class="giallo-l"><span style="color: light-dark(#D73A49, #F97583);">        if</span><span style="color: light-dark(#005CC5, #79B8FF);"> self</span><span>.</span><span>gt</span><span style="color: light-dark(#D73A49, #F97583);"> is</span><span style="color: light-dark(#D73A49, #F97583);"> not</span><span style="color: light-dark(#005CC5, #79B8FF);"> None</span><span>:</span></span>
+<span class="giallo-l"><span>            value</span><span style="color: light-dark(#D73A49, #F97583);"> =</span><span> _gt</span><span>(</span><span>value</span><span>,</span><span style="color: light-dark(#005CC5, #79B8FF);"> self</span><span>.</span><span>gt</span><span>)</span></span>
+<span class="giallo-l"><span style="color: light-dark(#D73A49, #F97583);">        if</span><span style="color: light-dark(#005CC5, #79B8FF);"> self</span><span>.</span><span>gte</span><span style="color: light-dark(#D73A49, #F97583);"> is</span><span style="color: light-dark(#D73A49, #F97583);"> not</span><span style="color: light-dark(#005CC5, #79B8FF);"> None</span><span>:</span></span>
+<span class="giallo-l"><span>            value</span><span style="color: light-dark(#D73A49, #F97583);"> =</span><span> _gte</span><span>(</span><span>value</span><span>,</span><span style="color: light-dark(#005CC5, #79B8FF);"> self</span><span>.</span><span>gte</span><span>)</span></span>
+<span class="giallo-l"><span style="color: light-dark(#D73A49, #F97583);">        return</span><span> value</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span style="color: light-dark(#6F42C1, #B392F0);">@</span><span style="color: light-dark(#6F42C1, #B392F0);">dataclass</span><span>(</span><span style="color: light-dark(#E36209, #FFAB70);">frozen</span><span style="color: light-dark(#D73A49, #F97583);">=</span><span style="color: light-dark(#005CC5, #79B8FF);">True</span><span>)</span><span style="color: light-dark(#6A737D, #6A737D);">  #</span><span style="color: light-dark(#6A737D, #6A737D);"> the children of a frozen parent must be frozen</span></span>
+<span class="giallo-l"><span style="color: light-dark(#D73A49, #F97583);">class</span><span style="color: light-dark(#6F42C1, #B392F0);"> A</span><span>(</span><span style="color: light-dark(#6F42C1, #B392F0);">Base</span><span>)</span><span>:</span></span>
+<span class="giallo-l"><span>    x</span><span>:</span><span> t</span><span>.</span><span>Annotated</span><span>[</span><span style="color: light-dark(#005CC5, #79B8FF);">int</span><span>,</span><span> Number</span><span>(</span><span style="color: light-dark(#E36209, #FFAB70);">gt</span><span style="color: light-dark(#D73A49, #F97583);">=</span><span style="color: light-dark(#005CC5, #79B8FF);">0</span><span>,</span><span style="color: light-dark(#E36209, #FFAB70);"> lt</span><span style="color: light-dark(#D73A49, #F97583);">=</span><span style="color: light-dark(#005CC5, #79B8FF);">100</span><span>)</span><span>]</span></span>
+<span class="giallo-l"><span>    z</span><span>:</span><span style="color: light-dark(#005CC5, #79B8FF);"> int</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span>a1</span><span style="color: light-dark(#D73A49, #F97583);"> =</span><span> A</span><span>(</span><span style="color: light-dark(#005CC5, #79B8FF);">10</span><span>,</span><span style="color: light-dark(#005CC5, #79B8FF);"> 100</span><span>)</span><span style="color: light-dark(#6A737D, #6A737D);">  #</span><span style="color: light-dark(#6A737D, #6A737D);"> works</span></span>
+<span class="giallo-l"><span>a2</span><span style="color: light-dark(#D73A49, #F97583);"> =</span><span> A</span><span>(</span><span style="color: light-dark(#D73A49, #F97583);">-</span><span style="color: light-dark(#005CC5, #79B8FF);">1</span><span>,</span><span style="color: light-dark(#005CC5, #79B8FF);"> 100</span><span>)</span><span style="color: light-dark(#6A737D, #6A737D);">  #</span><span style="color: light-dark(#6A737D, #6A737D);"> fails validation! ValueError: -1 must be &gt; to 0</span></span></code></pre><h2 id="better-error-handling">Better error handling</h2>
+<p>The current solution is fine but has an annoying caveat: validation stops at the first
+exception. Most often than not, I want to see all the validation errors to fix them, not
+re-run the code until I don't get exceptions anymore. Since version 3.11, Python has
+<a rel="noopener external" target="_blank" href="https://docs.python.org/3/library/exceptions.html#exception-groups">exception groups</a>;
+that part of the documentation is terse though and I found a better explanation in the
+<a rel="noopener external" target="_blank" href="https://docs.python.org/3/tutorial/errors.html#raising-and-handling-multiple-unrelated-exceptions">exception tutorial</a>.</p>
+<p>They are a great solution for grouping multiple unrelated (as in, not chained) exceptions
+and give context as well. Let's see what the implementation looks like now:</p>
+<pre class="giallo" style="color-scheme: light dark; color: light-dark(#24292E, #E1E4E8); background-color: light-dark(#FFFFFF, #24292E);"><code data-lang="python"><span class="giallo-l"><span style="color: light-dark(#D73A49, #F97583);">from</span><span> dataclasses</span><span style="color: light-dark(#D73A49, #F97583);"> import</span><span> dataclass</span></span>
+<span class="giallo-l"><span style="color: light-dark(#D73A49, #F97583);">import</span><span> typing</span><span style="color: light-dark(#D73A49, #F97583);"> as</span><span> t</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span style="color: light-dark(#D73A49, #F97583);">class</span><span style="color: light-dark(#6F42C1, #B392F0);"> ValidationErrorGroup</span><span>(</span><span style="color: light-dark(#6F42C1, #B392F0);">ExceptionGroup</span><span>)</span><span>:</span></span>
+<span class="giallo-l"><span style="color: light-dark(#D73A49, #F97583);">    def</span><span style="color: light-dark(#6F42C1, #B392F0);"> derive</span><span>(</span><span>self</span><span>,</span><span> excs</span><span>)</span><span>:</span></span>
+<span class="giallo-l"><span style="color: light-dark(#D73A49, #F97583);">        return</span><span> ValidationErrorGroup</span><span>(</span><span style="color: light-dark(#005CC5, #79B8FF);">self</span><span>.</span><span>message</span><span>,</span><span> excs</span><span>)</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span style="color: light-dark(#6F42C1, #B392F0);">@</span><span style="color: light-dark(#6F42C1, #B392F0);">dataclass</span><span>(</span><span style="color: light-dark(#E36209, #FFAB70);">frozen</span><span style="color: light-dark(#D73A49, #F97583);">=</span><span style="color: light-dark(#005CC5, #79B8FF);">True</span><span>)</span></span>
+<span class="giallo-l"><span style="color: light-dark(#D73A49, #F97583);">class</span><span style="color: light-dark(#6F42C1, #B392F0);"> Base</span><span>:</span></span>
+<span class="giallo-l"><span style="color: light-dark(#D73A49, #F97583);">    def</span><span style="color: light-dark(#005CC5, #79B8FF);"> __post_init__</span><span>(</span><span>self</span><span>)</span><span>:</span></span>
+<span class="giallo-l"><span>        annotations</span><span style="color: light-dark(#D73A49, #F97583);"> =</span><span> t</span><span>.</span><span>get_type_hints</span><span>(</span><span style="color: light-dark(#005CC5, #79B8FF);">type</span><span>(</span><span style="color: light-dark(#005CC5, #79B8FF);">self</span><span>)</span><span>,</span><span style="color: light-dark(#E36209, #FFAB70);"> include_extras</span><span style="color: light-dark(#D73A49, #F97583);">=</span><span style="color: light-dark(#005CC5, #79B8FF);">True</span><span>)</span></span>
+<span class="giallo-l"><span>        excs</span><span>:</span><span> list</span><span>[</span><span style="color: light-dark(#005CC5, #79B8FF);">Exception</span><span>]</span><span style="color: light-dark(#D73A49, #F97583);"> =</span><span> [</span><span>]</span></span>
+<span class="giallo-l"><span style="color: light-dark(#D73A49, #F97583);">        for</span><span> k</span><span>,</span><span> annot</span><span style="color: light-dark(#D73A49, #F97583);"> in</span><span> annotations</span><span>.</span><span>items</span><span>(</span><span>)</span><span>:</span></span>
+<span class="giallo-l"><span>            callables</span><span style="color: light-dark(#D73A49, #F97583);"> =</span><span> [</span></span>
+<span class="giallo-l"><span>                elem</span><span style="color: light-dark(#D73A49, #F97583);"> for</span><span> elem</span><span style="color: light-dark(#D73A49, #F97583);"> in</span><span style="color: light-dark(#005CC5, #79B8FF);"> getattr</span><span>(</span><span>annot</span><span>,</span><span style="color: light-dark(#032F62, #9ECBFF);"> &quot;</span><span style="color: light-dark(#032F62, #9ECBFF);">__metadata__</span><span style="color: light-dark(#032F62, #9ECBFF);">&quot;</span><span>,</span><span> [</span><span>]</span><span>)</span><span style="color: light-dark(#D73A49, #F97583);"> if</span><span style="color: light-dark(#005CC5, #79B8FF);"> callable</span><span>(</span><span>elem</span><span>)</span></span>
+<span class="giallo-l"><span>            ]</span></span>
+<span class="giallo-l"><span style="color: light-dark(#D73A49, #F97583);">            for</span><span> f</span><span style="color: light-dark(#D73A49, #F97583);"> in</span><span> callables</span><span>:</span></span>
+<span class="giallo-l"><span style="color: light-dark(#D73A49, #F97583);">                try</span><span>:</span></span>
+<span class="giallo-l"><span>                    val</span><span style="color: light-dark(#D73A49, #F97583);"> =</span><span style="color: light-dark(#005CC5, #79B8FF);"> getattr</span><span>(</span><span style="color: light-dark(#005CC5, #79B8FF);">self</span><span>,</span><span> k</span><span>)</span></span>
+<span class="giallo-l"><span style="color: light-dark(#005CC5, #79B8FF);">                    object</span><span>.</span><span style="color: light-dark(#005CC5, #79B8FF);">__setattr__</span><span>(</span><span style="color: light-dark(#005CC5, #79B8FF);">self</span><span>,</span><span> k</span><span>,</span><span> f</span><span>(</span><span>val</span><span>)</span><span>)</span></span>
+<span class="giallo-l"><span style="color: light-dark(#D73A49, #F97583);">                except</span><span style="color: light-dark(#005CC5, #79B8FF);"> ValueError</span><span style="color: light-dark(#D73A49, #F97583);"> as</span><span> e</span><span>:</span></span>
+<span class="giallo-l"><span>                    e</span><span>.</span><span>add_note</span><span>(</span><span style="color: light-dark(#D73A49, #F97583);">f</span><span style="color: light-dark(#032F62, #9ECBFF);">&quot;</span><span style="color: light-dark(#032F62, #9ECBFF);">Error for attribute </span><span style="color: light-dark(#032F62, #9ECBFF);">&#39;</span><span style="color: light-dark(#005CC5, #79B8FF);">{</span><span>k</span><span style="color: light-dark(#005CC5, #79B8FF);">}</span><span style="color: light-dark(#032F62, #9ECBFF);">&#39;: </span><span style="color: light-dark(#005CC5, #79B8FF);">{</span><span>val</span><span style="color: light-dark(#005CC5, #79B8FF);">}</span><span style="color: light-dark(#032F62, #9ECBFF);">&quot;</span><span>)</span></span>
+<span class="giallo-l"><span>                    excs</span><span>.</span><span>append</span><span>(</span><span>e</span><span>)</span></span>
+<span class="giallo-l"><span style="color: light-dark(#D73A49, #F97583);">        if</span><span> excs</span><span>:</span></span>
+<span class="giallo-l"><span style="color: light-dark(#D73A49, #F97583);">            raise</span><span> ValidationErrorGroup</span><span>(</span><span style="color: light-dark(#032F62, #9ECBFF);">&quot;</span><span style="color: light-dark(#032F62, #9ECBFF);">Validation Errors</span><span style="color: light-dark(#032F62, #9ECBFF);">&quot;</span><span>,</span><span> excs</span><span>)</span></span></code></pre>
+<p>I've decided to only catch <code>ValueError</code> as I believe it's the one exception you should
+use in validation functions/classes but you are free to add more.</p>
+<p>You'll also see the <code>e.add_note</code> in there, to provide additional context when getting an
+error.</p>
+<p>Now, let's try the implementation with multiple validation errors:</p>
+<pre class="giallo" style="color-scheme: light dark; color: light-dark(#24292E, #E1E4E8); background-color: light-dark(#FFFFFF, #24292E);"><code data-lang="python"><span class="giallo-l"><span style="color: light-dark(#D73A49, #F97583);">from</span><span> dataclasses</span><span style="color: light-dark(#D73A49, #F97583);"> import</span><span> dataclass</span></span>
+<span class="giallo-l"><span style="color: light-dark(#D73A49, #F97583);">import</span><span> typing</span><span style="color: light-dark(#D73A49, #F97583);"> as</span><span> t</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span style="color: light-dark(#D73A49, #F97583);">def</span><span style="color: light-dark(#6F42C1, #B392F0);"> nonempty_string</span><span>(</span><span>value</span><span>:</span><span style="color: light-dark(#005CC5, #79B8FF);"> str</span><span>)</span><span> -&gt;</span><span style="color: light-dark(#005CC5, #79B8FF);"> str</span><span>:</span></span>
+<span class="giallo-l"><span style="color: light-dark(#D73A49, #F97583);">    if</span><span style="color: light-dark(#005CC5, #79B8FF);"> len</span><span>(</span><span>value</span><span>)</span><span style="color: light-dark(#D73A49, #F97583);"> ==</span><span style="color: light-dark(#005CC5, #79B8FF);"> 0</span><span style="color: light-dark(#D73A49, #F97583);"> or</span><span> value</span><span>.</span><span>isspace</span><span>(</span><span>)</span><span>:</span></span>
+<span class="giallo-l"><span style="color: light-dark(#D73A49, #F97583);">        raise</span><span style="color: light-dark(#005CC5, #79B8FF);"> ValueError</span><span>(</span><span style="color: light-dark(#032F62, #9ECBFF);">&quot;</span><span style="color: light-dark(#032F62, #9ECBFF);">String without any non-whitespace characters.</span><span style="color: light-dark(#032F62, #9ECBFF);">&quot;</span><span>)</span></span>
+<span class="giallo-l"><span style="color: light-dark(#D73A49, #F97583);">    return</span><span> value</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span style="color: light-dark(#6F42C1, #B392F0);">@</span><span style="color: light-dark(#6F42C1, #B392F0);">dataclass</span><span>(</span><span style="color: light-dark(#E36209, #FFAB70);">frozen</span><span style="color: light-dark(#D73A49, #F97583);">=</span><span style="color: light-dark(#005CC5, #79B8FF);">True</span><span>)</span></span>
+<span class="giallo-l"><span style="color: light-dark(#D73A49, #F97583);">class</span><span style="color: light-dark(#6F42C1, #B392F0);"> A</span><span>(</span><span style="color: light-dark(#6F42C1, #B392F0);">Base</span><span>)</span><span>:</span></span>
+<span class="giallo-l"><span>    x</span><span>:</span><span> t</span><span>.</span><span>Annotated</span><span>[</span><span style="color: light-dark(#005CC5, #79B8FF);">int</span><span>,</span><span> Number</span><span>(</span><span style="color: light-dark(#E36209, #FFAB70);">gt</span><span style="color: light-dark(#D73A49, #F97583);">=</span><span style="color: light-dark(#005CC5, #79B8FF);">0</span><span>,</span><span style="color: light-dark(#E36209, #FFAB70);"> lt</span><span style="color: light-dark(#D73A49, #F97583);">=</span><span style="color: light-dark(#005CC5, #79B8FF);">100</span><span>)</span><span>]</span></span>
+<span class="giallo-l"><span>    y</span><span>:</span><span> t</span><span>.</span><span>Annotated</span><span>[</span><span style="color: light-dark(#005CC5, #79B8FF);">str</span><span>,</span><span> nonempty_string</span><span>]</span></span>
+<span class="giallo-l"><span>    z</span><span>:</span><span style="color: light-dark(#005CC5, #79B8FF);"> int</span><span style="color: light-dark(#D73A49, #F97583);"> =</span><span style="color: light-dark(#005CC5, #79B8FF);"> 0</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span>a</span><span style="color: light-dark(#D73A49, #F97583);"> =</span><span> A</span><span>(</span><span style="color: light-dark(#D73A49, #F97583);">-</span><span style="color: light-dark(#005CC5, #79B8FF);">1</span><span>,</span><span style="color: light-dark(#032F62, #9ECBFF);"> &quot;</span><span style="color: light-dark(#032F62, #9ECBFF);">   &quot;</span><span>)</span></span></code></pre>
+<p>Will output:</p>
+<pre class="giallo" style="color-scheme: light dark; color: light-dark(#24292E, #E1E4E8); background-color: light-dark(#FFFFFF, #24292E);"><code data-lang="plain"><span class="giallo-l"><span>  + Exception Group Traceback (most recent call last):</span></span>
+<span class="giallo-l"><span>  |   File &quot;/home/nathan/.vscode/extensions/ms-python.python-2026.0.0-linux-x64/python_files/python_server.py&quot;, line 134, in exec_user_input</span></span>
+<span class="giallo-l"><span>  |     retval = callable_(user_input, user_globals)</span></span>
+<span class="giallo-l"><span>  |   File &quot;&lt;string&gt;&quot;, line 1, in &lt;module&gt;</span></span>
+<span class="giallo-l"><span>  |   File &quot;&lt;string&gt;&quot;, line 6, in __init__</span></span>
+<span class="giallo-l"><span>  |   File &quot;&lt;string&gt;&quot;, line 26, in __post_init__</span></span>
+<span class="giallo-l"><span>  | ValidationErrorGroup: Validation Errors (2 sub-exceptions)</span></span>
+<span class="giallo-l"><span>  +-+---------------- 1 ----------------</span></span>
+<span class="giallo-l"><span>    | Traceback (most recent call last):</span></span>
+<span class="giallo-l"><span>    |   File &quot;&lt;string&gt;&quot;, line 21, in __post_init__</span></span>
+<span class="giallo-l"><span>    |   File &quot;&lt;string&gt;&quot;, line 35, in __call__</span></span>
+<span class="giallo-l"><span>    |   File &quot;&lt;string&gt;&quot;, line 13, in _gt</span></span>
+<span class="giallo-l"><span>    | ValueError: -1 must be &gt; to 0</span></span>
+<span class="giallo-l"><span>    | Error for attribute &#39;x&#39;: -1</span></span>
+<span class="giallo-l"><span>    +---------------- 2 ----------------</span></span>
+<span class="giallo-l"><span>    | Traceback (most recent call last):</span></span>
+<span class="giallo-l"><span>    |   File &quot;&lt;string&gt;&quot;, line 21, in __post_init__</span></span>
+<span class="giallo-l"><span>    |   File &quot;&lt;string&gt;&quot;, line 6, in nonempty_string</span></span>
+<span class="giallo-l"><span>    | ValueError: String without any non-whitespace characters.</span></span>
+<span class="giallo-l"><span>    | Error for attribute &#39;y&#39;:</span></span>
+<span class="giallo-l"><span>    +------------------------------------</span></span></code></pre>
+<p>Thanks for reading! See below if you're interested in another way to approach the same
+problem =)</p>
+<h2 id="bonus-using-closures-instead-of-classes">Bonus: using closures instead of classes</h2>
+<p>The more functionally inclined developers will know that late-binding of values can also
+happen through closures rather than objects (here, read classes).</p>
+<p>Here's a solution using <code>functools.partial</code> for the bounding value and another closure
+to capture the value being tested, like:</p>
+<pre class="giallo" style="color-scheme: light dark; color: light-dark(#24292E, #E1E4E8); background-color: light-dark(#FFFFFF, #24292E);"><code data-lang="plain"><span class="giallo-l"><span>cmp_function(bound)(value)</span></span></code></pre><pre class="giallo" style="color-scheme: light dark; color: light-dark(#24292E, #E1E4E8); background-color: light-dark(#FFFFFF, #24292E);"><code data-lang="python"><span class="giallo-l"><span style="color: light-dark(#D73A49, #F97583);">from</span><span> collections</span><span>.</span><span>abc</span><span style="color: light-dark(#D73A49, #F97583);"> import</span><span> Callable</span></span>
+<span class="giallo-l"><span style="color: light-dark(#D73A49, #F97583);">from</span><span> functools</span><span style="color: light-dark(#D73A49, #F97583);"> import</span><span> partial</span><span>,</span><span> Placeholder</span><span style="color: light-dark(#6A737D, #6A737D);">  #</span><span style="color: light-dark(#6A737D, #6A737D);"> placeholder requires 3.14+</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span style="color: light-dark(#D73A49, #F97583);">def</span><span style="color: light-dark(#6F42C1, #B392F0);"> make_partial_cmp</span><span>(</span></span>
+<span class="giallo-l"><span>    func</span><span>:</span><span> Callable</span><span>[</span><span>[</span><span style="color: light-dark(#005CC5, #79B8FF);">int</span><span style="color: light-dark(#D73A49, #F97583);"> |</span><span style="color: light-dark(#005CC5, #79B8FF);"> float</span><span>,</span><span style="color: light-dark(#005CC5, #79B8FF);"> int</span><span style="color: light-dark(#D73A49, #F97583);"> |</span><span style="color: light-dark(#005CC5, #79B8FF);"> float</span><span>]</span><span>,</span><span style="color: light-dark(#005CC5, #79B8FF);"> int</span><span style="color: light-dark(#D73A49, #F97583);"> |</span><span style="color: light-dark(#005CC5, #79B8FF);"> float</span><span>]</span><span>,</span></span>
+<span class="giallo-l"><span>)</span><span> -&gt;</span><span> Callable</span><span>[</span><span>[</span><span style="color: light-dark(#005CC5, #79B8FF);">int</span><span style="color: light-dark(#D73A49, #F97583);"> |</span><span style="color: light-dark(#005CC5, #79B8FF);"> float</span><span>]</span><span>,</span><span> partial</span><span>[</span><span style="color: light-dark(#005CC5, #79B8FF);">int</span><span style="color: light-dark(#D73A49, #F97583);"> |</span><span style="color: light-dark(#005CC5, #79B8FF);"> float</span><span>]</span><span>]</span><span>:</span></span>
+<span class="giallo-l"><span style="color: light-dark(#D73A49, #F97583);">    def</span><span style="color: light-dark(#6F42C1, #B392F0);"> f</span><span>(</span><span>value</span><span>:</span><span style="color: light-dark(#005CC5, #79B8FF);"> int</span><span style="color: light-dark(#D73A49, #F97583);"> |</span><span style="color: light-dark(#005CC5, #79B8FF);"> float</span><span>)</span><span>:</span></span>
+<span class="giallo-l"><span style="color: light-dark(#D73A49, #F97583);">        return</span><span> partial</span><span>(</span><span>func</span><span>,</span><span> Placeholder</span><span>,</span><span> value</span><span>)</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span style="color: light-dark(#D73A49, #F97583);">    return</span><span> f</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span style="color: light-dark(#6A737D, #6A737D);">#</span><span style="color: light-dark(#6A737D, #6A737D);"> Using the comparison functions from earlier</span></span>
+<span class="giallo-l"><span>lt</span><span style="color: light-dark(#D73A49, #F97583);"> =</span><span> make_partial_cmp</span><span>(</span><span>_lt</span><span>)</span></span>
+<span class="giallo-l"><span>lte</span><span style="color: light-dark(#D73A49, #F97583);"> =</span><span> make_partial_cmp</span><span>(</span><span>_lte</span><span>)</span></span>
+<span class="giallo-l"><span>gt</span><span style="color: light-dark(#D73A49, #F97583);"> =</span><span> make_partial_cmp</span><span>(</span><span>_gt</span><span>)</span></span>
+<span class="giallo-l"><span>gte</span><span style="color: light-dark(#D73A49, #F97583);"> =</span><span> make_partial_cmp</span><span>(</span><span>_gte</span><span>)</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span style="color: light-dark(#6F42C1, #B392F0);">@</span><span style="color: light-dark(#6F42C1, #B392F0);">dataclass</span><span>(</span><span style="color: light-dark(#E36209, #FFAB70);">frozen</span><span style="color: light-dark(#D73A49, #F97583);">=</span><span style="color: light-dark(#005CC5, #79B8FF);">True</span><span>)</span></span>
+<span class="giallo-l"><span style="color: light-dark(#D73A49, #F97583);">class</span><span style="color: light-dark(#6F42C1, #B392F0);"> A</span><span>(</span><span style="color: light-dark(#6F42C1, #B392F0);">Base</span><span>)</span><span>:</span></span>
+<span class="giallo-l"><span>    x</span><span>:</span><span> t</span><span>.</span><span>Annotated</span><span>[</span><span style="color: light-dark(#005CC5, #79B8FF);">int</span><span>,</span><span> gte</span><span>(</span><span style="color: light-dark(#005CC5, #79B8FF);">0</span><span>)</span><span>,</span><span> lt</span><span>(</span><span style="color: light-dark(#005CC5, #79B8FF);">10</span><span>)</span><span>]</span><span style="color: light-dark(#6A737D, #6A737D);">  #</span><span style="color: light-dark(#6A737D, #6A737D);"> multiple functions can be chained</span></span></code></pre>
+<p>For Python at least, callable classes are easier to read but I like this solution because
+it avoids littering the code with <code>None</code> like in the <code>Number</code> example, and it encourages
+function re-use.</p>
+
+
+      </main>
+    <footer>
+      Nathan Furnal © 2026
+    </footer>
+  </body>
+</html>
