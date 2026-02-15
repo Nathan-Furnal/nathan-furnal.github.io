@@ -106,8 +106,8 @@ class Base:
                 object.__setattr__(self, k, f(val))
 ```
 
-Functions are callable objects and they are perfectly to use as metadata but we often
-want to call them with additional parameters when the instance is initialized, not
+Functions are callable objects and they are perfectly fine to use as metadata but we
+often want to call them with additional parameters when the instance is initialized, not
 directly in the annotation. The usual way to go around this issue is to create `callable`
 classes. Let's say we want to bound numeric values to certain ranges, we can do this
 similarly to what
@@ -264,7 +264,7 @@ problem =)
 ## Bonus: using closures instead of classes
 
 The more functionally inclined developers will know that late-binding of values can also
-happen through closures rather objects (here, read classes).
+happen through closures rather than objects (here, read classes).
 
 Here's a solution using `functools.partial` for the bounding value and another closure
 to capture the value being tested, like:
@@ -297,5 +297,5 @@ class A(Base):
 ```
 
 For Python at least, callable classes are easier to read but I like this solution because
-it avoid littering the code with `None` like in the `Number` example and it encourages
+it avoids littering the code with `None` like in the `Number` example, and it encourages
 function re-use.
