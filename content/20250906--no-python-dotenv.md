@@ -323,5 +323,6 @@ strings, a constraint of `os.environ`.
 ## Conclusion
 
 I hope I've shown you a useful implementation! There are some nice quality of life
-features I could imagine like adding support for comments or finding `.env` files automatically
-but then I would most likely end up with something similar to `python-dotenv` =)
+features I could imagine like adding support for comments or finding `.env` files
+automatically but then I would most likely end up with something similar to
+`python-dotenv` =)

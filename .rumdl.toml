@@ -5,6 +5,7 @@ disable = ["MD041"]
 
 [MD013]
 code_blocks = false  # Don't check code blocks
+reflow = true
 
 [MD033]  # No inline HTML
 allowed_elements = ["kbd"]

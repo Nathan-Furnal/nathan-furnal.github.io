@@ -54,13 +54,12 @@ exec emacs -nw "$@"
 
 I have it in `/home/natfu/.local/bin/emacseditor` and I've set my `$EDITOR` to this path.
 
-Note that this spins a new instance of Emacs every time with a slight delay in
-starting up even with a rather optimized `~/.emacs.d/init.el`. The alternative
-is to use the
+Note that this spins a new instance of Emacs every time with a slight delay in starting
+up even with a rather optimized `~/.emacs.d/init.el`. The alternative is to use the
 [`emacsclient`](https://www.gnu.org/software/emacs/manual/html_node/emacs/Invoking-emacsclient.html).
-In my case, I'm using Linux with `systemd` so I can write a unit file that will
-start an Emacs daemon in the background and open a new frame instantly by
-calling it. On my system, I've found that file in those places:
+In my case, I'm using Linux with `systemd` so I can write a unit file that will start an
+Emacs daemon in the background and open a new frame instantly by calling it. On my
+system, I've found that file in those places:
 
 - `/usr/share/emacs/30.2/etc/emacs.service`
 - `/usr/lib/systemd/user/emacs.service`

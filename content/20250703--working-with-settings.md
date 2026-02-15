@@ -246,24 +246,23 @@ code is moved to production, those patterns stay as well and "infect" everything
 with mutable global state.
 
 In my experience, a common frustrating case is when you're dealing with
-[anaconda](https://docs.conda.io/en/latest/) and tools that require to be in the
-front row seat like the job scheduler, [Airflow](https://airflow.apache.org/).
-If you, like me, have an instance of Airflow running on a server with a lot of
-projects, it can be tough. Looking at Airflow's documentation [on its
-configuration](https://airflow.apache.org/docs/apache-airflow/stable/howto/set-config.html)
-as well as [its module
-documentation](https://airflow.apache.org/docs/apache-airflow/stable/administration-and-deployment/modules_management.html),
+[anaconda](https://docs.conda.io/en/latest/) and tools that require to be in the front
+row seat like the job scheduler, [Airflow](https://airflow.apache.org/). If you, like me,
+have an instance of Airflow running on a server with a lot of projects, it can be tough.
+Looking at Airflow's documentation
+[on its configuration](https://airflow.apache.org/docs/apache-airflow/stable/howto/set-config.html)
+as well as
+[its module documentation](https://airflow.apache.org/docs/apache-airflow/stable/administration-and-deployment/modules_management.html),
 there is a ton of explanation in how to export environment variables, modify the
-`PYTHONPATH` environment variables, and so on. Being able to use configuration
-files like `airflow.cfg` is great but the fact the documentation is falling back
-on global environment variables isn't. Same for [Airflow
-variables](https://airflow.apache.org/docs/apache-airflow/stable/howto/variable.html)
-where the first example includes using environment variables. If you mix bash
-and python, typically when retrieving data and then processing it, you're in for
-a world of hurt. I also mention `conda` because it's typical to activate an
-environment globally for a project to have access to all its executables, in
-tandem with Airflow, the state of your application quickly becomes tough to
-manage.
+`PYTHONPATH` environment variables, and so on. Being able to use configuration files like
+`airflow.cfg` is great but the fact the documentation is falling back on global
+environment variables isn't. Same for
+[Airflow variables](https://airflow.apache.org/docs/apache-airflow/stable/howto/variable.html)
+where the first example includes using environment variables. If you mix bash and python,
+typically when retrieving data and then processing it, you're in for a world of hurt. I
+also mention `conda` because it's typical to activate an environment globally for a
+project to have access to all its executables, in tandem with Airflow, the state of your
+application quickly becomes tough to manage.
 
 Now, you can take some steps to alleviate the issues I just mentioned:
 
